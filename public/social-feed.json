@@ -1,0 +1,69 @@
+{
+  "updatedAt": "2026-10-15T21:30:00Z",
+  "cacheTtlSeconds": 300,
+  "posts": [
+    {
+      "id": "post-ig-1",
+      "platform": "instagram",
+      "account": {
+        "handle": "bajajfinance__moneyadda",
+        "displayName": "bajajfinance__moneyadda",
+        "profileUrl": "https://www.instagram.com/bajajfinance__moneyadda/",
+        "avatarUrl": "/money-adda-logo.jpg",
+        "followersCount": "621K Followers",
+        "isVerified": true,
+        "businessCategory": "Investment & Personal Finance"
+      },
+      "caption": "Paise save karne hain ya invest? FD aur mutual funds dono popular options hain, lekin dono ka kaam karne ka tareeka alag hai. 👀 #FDvsMutualFunds #FixedDeposit #MutualFunds #MutualFundInvestment #InvestmentPlanning #PersonalFinanceIndia #SmartInvesting #InvestmentOptions #BajajFinance #MoneyAdda",
+      "thumbnailUrl": "/bajaj-instagram-reel.jpg",
+      "postUrl": "https://www.instagram.com/p/DdEfddPkWEl/",
+      "postType": "reel",
+      "aspectRatio": "portrait",
+      "likesCount": "4,447",
+      "commentsCount": "128",
+      "publishedAt": "2026-10-14"
+    },
+    {
+      "id": "post-fb-1",
+      "platform": "facebook",
+      "account": {
+        "handle": "bajajfinance",
+        "displayName": "Bajaj Finance",
+        "profileUrl": "https://www.facebook.com/bajaj.finance.in/",
+        "avatarUrl": "/bajaj-finserv-logo.png",
+        "followersCount": "1.5M Followers",
+        "isVerified": true,
+        "businessCategory": "All businesses"
+      },
+      "caption": "Gupta Ji is weighing the option of paying #EMI on time. Have you? ⬆️ Avoid penalty & late fees. ⬇️ Maintain a good CIBIL score. #HarTimeEMIOnTime #EMIBharaNa #CreditScore #BajajFinance",
+      "thumbnailUrl": "/bajaj-finance-facebook.jpg",
+      "postUrl": "https://www.facebook.com/bajaj.finance.in/videos/hartimeemiontime-bajaj-finserv/1208848543277013/",
+      "postType": "video",
+      "aspectRatio": "square",
+      "likesCount": "12,592",
+      "commentsCount": "342",
+      "publishedAt": "2026-10-13"
+    },
+    {
+      "id": "post-yt-1",
+      "platform": "youtube",
+      "account": {
+        "handle": "@BajajFinanceMoneyAdda",
+        "displayName": "Bajaj Finance Money Adda",
+        "profileUrl": "https://www.youtube.com/@BajajFinanceMoneyAdda",
+        "avatarUrl": "/money-adda-logo.jpg",
+        "followersCount": "850K Subscribers",
+        "isVerified": true,
+        "businessCategory": "Investment"
+      },
+      "caption": "SIP Plans for 3 Years: Investment Options, Risks and Selection #BajajFinance. Learn smart investing strategies with @BajajFinanceMoneyAdda",
+      "thumbnailUrl": "/youtube-sip-thumbnail.jpg",
+      "postUrl": "https://www.youtube.com/watch?v=IE1HNML-FKg",
+      "postType": "video",
+      "aspectRatio": "landscape",
+      "likesCount": "15,420",
+      "commentsCount": "890",
+      "publishedAt": "2026-10-14"
+    }
+  ]
+}
