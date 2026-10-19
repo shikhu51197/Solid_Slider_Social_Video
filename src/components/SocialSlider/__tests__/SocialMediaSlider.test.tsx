@@ -105,4 +105,63 @@ describe('SocialMediaSlider Component', () => {
     expect(errorTitle).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Try Again' })).toBeInTheDocument();
   });
+
+  it('navigates to next and previous slides via touch swipe gestures', async () => {
+    const provider = createSocialDataProvider('catalog');
+    const { container } = render(() => <SocialMediaSlider dataProvider={provider} />);
+
+    await screen.findAllByText('bajajfinance__moneyadda');
+    const track = container.querySelector('.social-slider-track');
+    expect(track).toBeInTheDocument();
+
+    // Swipe left (swipe to next slide)
+    fireEvent.touchStart(track!, { touches: [{ clientX: 250, clientY: 100 }] });
+    fireEvent.touchMove(track!, { touches: [{ clientX: 150, clientY: 100 }] });
+    fireEvent.touchEnd(track!);
+
+    expect(await screen.findByText(/Gupta Ji is weighing the option/)).toBeInTheDocument();
+
+    // Swipe right (swipe back to previous slide)
+    fireEvent.touchStart(track!, { touches: [{ clientX: 100, clientY: 100 }] });
+    fireEvent.touchMove(track!, { touches: [{ clientX: 220, clientY: 100 }] });
+    fireEvent.touchEnd(track!);
+
+    expect(await screen.findByText(/Paise save karne hain ya invest?/)).toBeInTheDocument();
+  });
+
+  it('navigates to next slide via desktop mouse drag gesture', async () => {
+    const provider = createSocialDataProvider('catalog');
+    const { container } = render(() => <SocialMediaSlider dataProvider={provider} />);
+
+    await screen.findAllByText('bajajfinance__moneyadda');
+    const track = container.querySelector('.social-slider-track');
+    expect(track).toBeInTheDocument();
+
+    // Mouse drag left (drag next)
+    fireEvent.mouseDown(track!, { button: 0, clientX: 300, clientY: 100 });
+    fireEvent.mouseMove(window, { clientX: 200, clientY: 100 });
+    fireEvent.mouseUp(window);
+
+    expect(await screen.findByText(/Gupta Ji is weighing the option/)).toBeInTheDocument();
+  });
+
+  it('navigates slides via horizontal wheel/trackpad scroll gestures', async () => {
+    const provider = createSocialDataProvider('catalog');
+    const { container } = render(() => <SocialMediaSlider dataProvider={provider} />);
+
+    await screen.findAllByText('bajajfinance__moneyadda');
+    const track = container.querySelector('.social-slider-track');
+    expect(track).toBeInTheDocument();
+
+    // Horizontal wheel scroll right (deltaX > 0)
+    fireEvent.wheel(track!, { deltaX: 40, deltaY: 0 });
+
+    expect(await screen.findByText(/Gupta Ji is weighing the option/)).toBeInTheDocument();
+
+    // Horizontal wheel scroll left (deltaX < 0) after debounce delay
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    fireEvent.wheel(track!, { deltaX: -40, deltaY: 0 });
+
+    expect(await screen.findByText(/Paise save karne hain ya invest?/)).toBeInTheDocument();
+  });
 });

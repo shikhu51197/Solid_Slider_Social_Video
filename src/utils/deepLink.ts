@@ -1,9 +1,10 @@
+/// <reference lib="dom" />
 /**
  * Platform deep linking and universal link resolution utilities.
  * Provides fallback to canonical web permalinks across devices.
  */
 
-import type { SocialPlatform } from '../types/social';
+import type { SocialPlatform } from '../types/social.ts';
 
 export function getPlatformDeepLink(platform: SocialPlatform, targetUrl: string): string | undefined {
   if (!targetUrl) return undefined;

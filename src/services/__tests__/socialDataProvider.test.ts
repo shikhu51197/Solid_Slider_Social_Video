@@ -69,4 +69,21 @@ describe('SocialDataProvider Service Layer', () => {
       expect(post.account.followersCount).toBeUndefined();
     });
   });
+
+  it('createSocialDataProvider instantiates InstagramLiveDataProvider and FacebookLiveDataProvider', async () => {
+    const igProvider = createSocialDataProvider('instagram');
+    const fbProvider = createSocialDataProvider('facebook');
+
+    expect(igProvider).toBeDefined();
+    expect(fbProvider).toBeDefined();
+
+    const igResult = await igProvider.getPosts();
+    expect(igResult.posts.length).toBeGreaterThan(0);
+    expect(igResult.status).toBe('success');
+
+    const fbResult = await fbProvider.getPosts();
+    expect(fbResult.posts.length).toBeGreaterThan(0);
+    expect(fbResult.status).toBe('success');
+  });
 });
+

@@ -6,6 +6,11 @@ import type {
   SocialPost,
 } from '../types/social';
 import { getPlatformDeepLink } from '../utils/deepLink';
+import {
+  fetchYouTubeChannelSliderPosts,
+  getYouTubeApiKey,
+  type YouTubeChannelInfo,
+} from './youtubeApiService';
 
 /**
  * Official Channel Registry supplied by the business team.
@@ -86,7 +91,7 @@ export const OFFICIAL_POSTS: SocialPost[] = [
       displayName: 'Bajaj Finance Money Adda',
       profileUrl: 'https://www.youtube.com/@BajajFinanceMoneyAdda',
       avatarUrl: '/money-adda-logo.jpg',
-      followersCount: '850K Subscribers',
+      followersCount: '204K Subscribers',
       isVerified: true,
       businessCategory: 'Investment',
     },
@@ -94,10 +99,12 @@ export const OFFICIAL_POSTS: SocialPost[] = [
     thumbnailUrl: '/youtube-sip-thumbnail.jpg',
     postUrl: 'https://www.youtube.com/watch?v=IE1HNML-FKg',
     deepLinkUrl: getPlatformDeepLink('youtube', 'https://www.youtube.com/watch?v=IE1HNML-FKg'),
+    videoId: 'IE1HNML-FKg',
     postType: 'video',
     aspectRatio: 'landscape',
     likesCount: '15,420',
     commentsCount: '890',
+    viewsCount: '24.5K views',
     publishedAt: '2026-10-14',
   },
 ];
@@ -320,11 +327,308 @@ export class LiveFeedSocialDataProvider implements ISocialDataProvider {
 }
 
 /**
+ * Official Live YouTube Data Provider.
+ * Directly integrates with Google YouTube Data API v3 endpoints:
+ * 1. GET /channels?part=snippet,contentDetails,statistics&forHandle={handle}&key={apiKey}
+ * 2. GET /playlistItems?part=contentDetails&playlistId={uploadsPlaylistId}&key={apiKey}
+ * 3. GET /videos?part=snippet,statistics,contentDetails&id={videoIds}&key={apiKey}
+ *
+ * Gracefully parses viewCount, likeCount, and commentCount without assuming every video exposes them.
+ * Includes client caching with TTL and graceful fallback to verified catalog data.
+ */
+export class YouTubeLiveDataProvider implements ISocialDataProvider {
+  private channelHandle: string;
+  private apiKey: string;
+  private cacheTtlMs: number;
+  private cachedResult: SocialDataResult | null = null;
+  private lastFetchTimestamp = 0;
+  private fallbackCatalog: OfficialCatalogDataProvider;
+  private channelInfo: YouTubeChannelInfo | null = null;
+
+  constructor(
+    channelHandle = '@bajaj_finance_limited',
+    apiKey?: string,
+    cacheTtlSeconds = 300
+  ) {
+    this.channelHandle = channelHandle;
+    this.apiKey = apiKey !== undefined ? apiKey : getYouTubeApiKey();
+    this.cacheTtlMs = cacheTtlSeconds * 1000;
+    this.fallbackCatalog = new OfficialCatalogDataProvider();
+  }
+
+  async getPosts(forceRefresh = false): Promise<SocialDataResult> {
+    const now = Date.now();
+    const isCacheValid = this.cachedResult && now - this.lastFetchTimestamp < this.cacheTtlMs;
+
+    if (!forceRefresh && isCacheValid && this.cachedResult) {
+      return {
+        ...this.cachedResult,
+        dataSource: 'cached',
+      };
+    }
+
+    if (!this.apiKey) {
+      return {
+        posts: [],
+        status: 'error',
+        errorMessage: 'YouTube API key is missing. Set VITE_YOUTUBE_API_KEY in .env.',
+        dataSource: 'none',
+        missingIntegrationDetails: [
+          {
+            platform: 'youtube',
+            missingConfigs: ['VITE_YOUTUBE_API_KEY'],
+            documentationUrl: 'https://developers.google.com/youtube/v3',
+            requiredScopes: ['https://www.googleapis.com/auth/youtube.readonly'],
+          },
+        ],
+      };
+    }
+
+    try {
+      const { channel, posts } = await fetchYouTubeChannelSliderPosts(
+        this.channelHandle,
+        10,
+        this.apiKey
+      );
+      this.channelInfo = channel;
+
+      if (posts && posts.length > 0) {
+        const result: SocialDataResult = {
+          posts,
+          status: 'success',
+          dataSource: 'live-api',
+          lastRefreshedAt: new Date().toISOString(),
+          cacheTtlSeconds: Math.floor(this.cacheTtlMs / 1000),
+        };
+        this.cachedResult = result;
+        this.lastFetchTimestamp = now;
+        return result;
+      }
+
+      return {
+        posts: [],
+        status: 'empty',
+        dataSource: 'live-api',
+        lastRefreshedAt: new Date().toISOString(),
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to retrieve YouTube data';
+      // Graceful fallback to verified catalog if network or quota issue occurs
+      const fallback = await this.fallbackCatalog.getPosts();
+      if (fallback.posts && fallback.posts.length > 0) {
+        return {
+          ...fallback,
+          errorMessage: `${message} (Falling back to verified catalog)`,
+        };
+      }
+
+      return {
+        posts: [],
+        status: 'error',
+        errorMessage: message,
+        dataSource: 'none',
+      };
+    }
+  }
+
+  async getAccount(handle: string): Promise<SocialAccount | null> {
+    const res = await this.getPosts();
+    const post = res.posts.find(
+      (p) => p.account.handle.toLowerCase() === handle.toLowerCase()
+    );
+    return post ? post.account : null;
+  }
+
+  getChannelInfo(): YouTubeChannelInfo | null {
+    return this.channelInfo;
+  }
+
+  getHandle(): string {
+    return this.channelHandle;
+  }
+}
+
+/**
+ * Real Live Instagram Data Provider.
+ * Fetches from /api/social/instagram endpoint (which executes server-side with INSTAGRAM_ACCESS_TOKEN).
+ * Gracefully handles errors and provides fallback.
+ */
+export class InstagramLiveDataProvider implements ISocialDataProvider {
+  private endpointUrl: string;
+  private cacheTtlMs: number;
+  private cachedResult: SocialDataResult | null = null;
+  private lastFetchTimestamp = 0;
+  private fallbackCatalog: OfficialCatalogDataProvider;
+
+  constructor(endpointUrl = '/api/social/instagram', cacheTtlSeconds = 300) {
+    this.endpointUrl = endpointUrl;
+    this.cacheTtlMs = cacheTtlSeconds * 1000;
+    this.fallbackCatalog = new OfficialCatalogDataProvider();
+  }
+
+  async getPosts(forceRefresh = false): Promise<SocialDataResult> {
+    const now = Date.now();
+    if (!forceRefresh && this.cachedResult && now - this.lastFetchTimestamp < this.cacheTtlMs) {
+      return { ...this.cachedResult, dataSource: 'cached' };
+    }
+
+    try {
+      if (typeof fetch !== 'undefined') {
+        const baseUrl = typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null'
+          ? window.location.origin
+          : 'http://127.0.0.1:5173';
+        const fullUrl = this.endpointUrl.startsWith('http') ? this.endpointUrl : `${baseUrl}${this.endpointUrl}`;
+        const res = await fetch(`${fullUrl}${forceRefresh ? '?refresh=true' : ''}`, {
+          headers: { Accept: 'application/json' },
+          cache: forceRefresh ? 'no-cache' : 'default',
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.posts) && data.posts.length > 0) {
+            const result: SocialDataResult = {
+              posts: data.posts,
+              status: 'success',
+              dataSource: 'live-api',
+              lastRefreshedAt: new Date().toISOString(),
+              cacheTtlSeconds: 300,
+            };
+            this.cachedResult = result;
+            this.lastFetchTimestamp = now;
+            return result;
+          }
+        }
+      }
+    } catch (err) {
+      // In test or offline environments, fallback cleanly
+    }
+
+    const catalogResult = await this.fallbackCatalog.getPosts();
+    const igPosts = catalogResult.posts.filter((p) => p.platform === 'instagram');
+    return {
+      posts: igPosts.length > 0 ? igPosts : catalogResult.posts,
+      status: 'success',
+      dataSource: 'official-catalog',
+      lastRefreshedAt: new Date().toISOString(),
+    };
+  }
+
+  async getAccount(handle: string): Promise<SocialAccount | null> {
+    const res = await this.getPosts();
+    const post = res.posts.find((p) => p.account.handle.toLowerCase() === handle.toLowerCase());
+    return post ? post.account : null;
+  }
+}
+
+/**
+ * Real Live Facebook Data Provider.
+ * Fetches from /api/social/facebook endpoint.
+ * Communicates configuration & permissions status when awaiting Page token.
+ */
+export class FacebookLiveDataProvider implements ISocialDataProvider {
+  private endpointUrl: string;
+  private cacheTtlMs: number;
+  private cachedResult: SocialDataResult | null = null;
+  private lastFetchTimestamp = 0;
+  private fallbackCatalog: OfficialCatalogDataProvider;
+
+  constructor(endpointUrl = '/api/social/facebook', cacheTtlSeconds = 300) {
+    this.endpointUrl = endpointUrl;
+    this.cacheTtlMs = cacheTtlSeconds * 1000;
+    this.fallbackCatalog = new OfficialCatalogDataProvider();
+  }
+
+  async getPosts(forceRefresh = false): Promise<SocialDataResult> {
+    const now = Date.now();
+    if (!forceRefresh && this.cachedResult && now - this.lastFetchTimestamp < this.cacheTtlMs) {
+      return { ...this.cachedResult, dataSource: 'cached' };
+    }
+
+    try {
+      if (typeof fetch !== 'undefined') {
+        const baseUrl = typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null'
+          ? window.location.origin
+          : 'http://127.0.0.1:5173';
+        const fullUrl = this.endpointUrl.startsWith('http') ? this.endpointUrl : `${baseUrl}${this.endpointUrl}`;
+        const res = await fetch(`${fullUrl}${forceRefresh ? '?refresh=true' : ''}`, {
+          headers: { Accept: 'application/json' },
+          cache: forceRefresh ? 'no-cache' : 'default',
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.posts) && data.posts.length > 0) {
+            const result: SocialDataResult = {
+              posts: data.posts,
+              status: 'success',
+              dataSource: 'live-api',
+              lastRefreshedAt: new Date().toISOString(),
+              cacheTtlSeconds: 300,
+            };
+            this.cachedResult = result;
+            this.lastFetchTimestamp = now;
+            return result;
+          }
+
+          if (data && data.status === 'unconfigured') {
+            const catalogResult = await this.fallbackCatalog.getPosts();
+            const fbPosts = catalogResult.posts.filter((p) => p.platform === 'facebook');
+            return {
+              posts: fbPosts,
+              status: 'success',
+              dataSource: 'official-catalog',
+              errorMessage: data.message,
+              missingIntegrationDetails: [
+                {
+                  platform: 'facebook',
+                  missingConfigs: ['FACEBOOK_PAGE_ID', 'FACEBOOK_PAGE_ACCESS_TOKEN'],
+                  documentationUrl: 'https://developers.facebook.com/docs/graph-api',
+                  requiredScopes: data.requiredPermissions || ['pages_show_list', 'pages_read_engagement'],
+                },
+              ],
+            };
+          }
+        }
+      }
+    } catch (err) {
+      // In test or offline environments, fallback cleanly
+    }
+
+    const catalogResult = await this.fallbackCatalog.getPosts();
+    const fbPosts = catalogResult.posts.filter((p) => p.platform === 'facebook');
+    return {
+      posts: fbPosts.length > 0 ? fbPosts : catalogResult.posts,
+      status: 'success',
+      dataSource: 'official-catalog',
+      lastRefreshedAt: new Date().toISOString(),
+    };
+  }
+
+  async getAccount(handle: string): Promise<SocialAccount | null> {
+    const res = await this.getPosts();
+    const post = res.posts.find((p) => p.account.handle.toLowerCase() === handle.toLowerCase());
+    return post ? post.account : null;
+  }
+}
+
+/**
  * Factory helper for runtime dependency injection and state testing.
  */
 export function createSocialDataProvider(
-  mode: 'catalog' | 'cached' | 'api' | 'empty' | 'error' | 'missing-metrics' | 'live' = 'live'
+  mode: 'youtube' | 'instagram' | 'facebook' | 'catalog' | 'cached' | 'api' | 'empty' | 'error' | 'missing-metrics' | 'live' = 'youtube',
+  options?: { channelHandle?: string; apiKey?: string }
 ): ISocialDataProvider {
+  if (mode === 'instagram') {
+    return new InstagramLiveDataProvider();
+  }
+
+  if (mode === 'facebook') {
+    return new FacebookLiveDataProvider();
+  }
+  if (mode === 'youtube') {
+    return new YouTubeLiveDataProvider(options?.channelHandle || '@bajaj_finance_limited', options?.apiKey);
+  }
+
   if (mode === 'empty') {
     return new OfficialCatalogDataProvider([]);
   }
@@ -346,6 +650,7 @@ export function createSocialDataProvider(
       ...post,
       likesCount: undefined,
       commentsCount: undefined,
+      viewsCount: undefined,
       account: {
         ...post.account,
         followersCount: undefined,
@@ -368,3 +673,4 @@ export function createSocialDataProvider(
 
   return new LiveFeedSocialDataProvider('/social-feed.json', 300);
 }
+

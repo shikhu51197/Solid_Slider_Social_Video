@@ -1,18 +1,13 @@
-import { SocialMediaSlider } from './components/SocialSlider/SocialMediaSlider';
-import { createSocialDataProvider } from './services/socialDataProvider';
-import './components/SocialSlider/SocialMediaSlider.css';
+import { UnifiedSocialSlider } from './components/Social/UnifiedSocialSlider';
+import './App.css';
 
 export function App() {
-  const liveProvider = createSocialDataProvider('live');
-
   return (
-    <main class="social-page-container">
-      {/* Primary Social Media Slider Component */}
-      <SocialMediaSlider
-        heading="Latest from social"
-        dataProvider={liveProvider}
-      />
-    </main>
+    <div class="app-page-layout">
+      <main class="app-main-content">
+        <UnifiedSocialSlider title="Latest from social" />
+      </main>
+    </div>
   );
 }
 

@@ -22,6 +22,8 @@ export interface SocialCardProps {
   onNext: () => void;
   onSelectIndex: (index: number) => void;
   showPlayButton?: boolean;
+  allowInlinePlayback?: boolean;
+  isDragging?: boolean;
 }
 
 /**
@@ -40,21 +42,10 @@ function getPlatformDisplayName(platform: string): string {
   }
 }
 
-/**
- * Formats publication timestamp into a human-readable date.
- */
-function formatPostDate(dateStr?: string): string {
-  if (!dateStr) return '';
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  } catch {
-    return dateStr;
-  }
-}
-
 export const SocialCard: Component<SocialCardProps> = (props) => {
+
   const handleCardClick = () => {
+    if (props.isDragging) return;
     if (props.post.postUrl) {
       openSocialLink(props.post.postUrl, props.post.deepLinkUrl);
     }
@@ -62,6 +53,7 @@ export const SocialCard: Component<SocialCardProps> = (props) => {
 
   const handleProfileClick = (e: MouseEvent) => {
     e.stopPropagation();
+    if (props.isDragging) return;
     if (props.post.account.profileUrl) {
       const appUrl = getPlatformDeepLink(props.post.platform, props.post.account.profileUrl);
       openSocialLink(props.post.account.profileUrl, appUrl);
@@ -76,8 +68,9 @@ export const SocialCard: Component<SocialCardProps> = (props) => {
   };
 
   return (
-    <article
-      class="social-card"
+    <div class="social-card-outer">
+      <article
+        class="social-card"
       tabIndex={0}
       role="link"
       aria-label={`Social media post by ${props.post.account.displayName}: ${props.post.caption}`}
@@ -122,28 +115,17 @@ export const SocialCard: Component<SocialCardProps> = (props) => {
 
       {/* 2. Media Area with Overlaid Circular Navigation Arrows */}
       <div class={`social-media-container ratio-${props.post.aspectRatio}`}>
-        {/* Ambient blurred backdrop for portrait/landscape media to prevent empty gaps and image distortion */}
-        <Show when={props.post.aspectRatio !== 'square'}>
-          <div
-            class="social-media-backdrop"
-            style={{
-              "background-image": `url(${props.post.thumbnailUrl})`
-            }}
-            aria-hidden="true"
-          />
-        </Show>
-
         <img
           src={props.post.thumbnailUrl}
           alt={props.post.caption}
-          class={`social-media-thumbnail ${props.post.aspectRatio !== 'square' ? 'contain' : 'cover'}`}
+          class="social-media-thumbnail cover"
           loading="lazy"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).src = '/bajaj-instagram-reel.jpg';
           }}
         />
 
-        {/* Center Play Button Overlay (Matching Reference Design) */}
+        {/* Center Play Button Overlay (Matching Reference Design) — plays in respective app or browser */}
         <Show when={props.showPlayButton ?? props.post.postType !== 'image'}>
           <CenterPlayButton
             onClick={(e) => {
@@ -233,12 +215,24 @@ export const SocialCard: Component<SocialCardProps> = (props) => {
           </button>
         </div>
 
-        {/* Actual Likes Count (Only displayed when provided; never fabricated) */}
-        <Show when={props.post.likesCount}>
-          <div class="social-likes-count">
-            {props.post.likesCount} Likes
-          </div>
-        </Show>
+        {/* Actual Likes Count & Video Metrics (Only displayed when provided; never fabricated) */}
+        <div class="social-metrics-row">
+          <Show when={props.post.likesCount}>
+            <span class="social-likes-count">
+              {props.post.likesCount} Likes
+            </span>
+          </Show>
+          <Show when={props.post.platform === 'youtube' && props.post.viewsCount}>
+            <span class="social-views-count">
+              {props.post.likesCount ? ' • ' : ''}{props.post.viewsCount}
+            </span>
+          </Show>
+          <Show when={props.post.platform === 'youtube' && props.post.commentsCount}>
+            <span class="social-comments-count">
+              {(props.post.likesCount || props.post.viewsCount) ? ' • ' : ''}{props.post.commentsCount} Comments
+            </span>
+          </Show>
+        </div>
 
         {/* Post Caption with Bold Username */}
         <div class="social-caption">
@@ -246,7 +240,10 @@ export const SocialCard: Component<SocialCardProps> = (props) => {
           <span>{props.post.caption}</span>
         </div>
 
-        {/* Platform Direct Link (Opens in same page for browser Back support) */}
+        {/* Subtle Horizontal Divider Line (Matching Figma Reference) */}
+        <div class="social-card-divider" />
+
+        {/* Platform Direct Link & Inline Watch Option */}
         <div class="social-view-more-row">
           <a
             href={props.post.postUrl}
@@ -259,21 +256,15 @@ export const SocialCard: Component<SocialCardProps> = (props) => {
             View more on {getPlatformDisplayName(props.post.platform)}
           </a>
         </div>
-
-        {/* Publication Date */}
-        <Show when={props.post.publishedAt}>
-          <div class="social-post-date">
-            Published {formatPostDate(props.post.publishedAt)}
-          </div>
-        </Show>
-
-        {/* Pagination Dots */}
-        <PaginationDots
-          total={props.totalSlides}
-          activeIndex={props.currentIndex}
-          onSelect={props.onSelectIndex}
-        />
       </div>
     </article>
-  );
+
+    {/* Pagination Dots placed outside the card border matching Figma design */}
+    <PaginationDots
+      total={props.totalSlides}
+      activeIndex={props.currentIndex}
+      onSelect={props.onSelectIndex}
+    />
+  </div>
+);
 };

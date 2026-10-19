@@ -4,7 +4,7 @@
  */
 
 export type SocialPlatform = 'instagram' | 'facebook' | 'youtube';
-export type SocialPostType = 'image' | 'video' | 'reel' | 'short';
+export type SocialPostType = 'image' | 'video' | 'reel' | 'short' | 'carousel' | 'unknown';
 export type SocialAspectRatio = 'square' | 'portrait' | 'landscape';
 
 export interface SocialAccount {
@@ -29,7 +29,20 @@ export interface SocialPost {
   aspectRatio: SocialAspectRatio;
   likesCount?: string;
   commentsCount?: string;
+  viewsCount?: string;
+  videoId?: string;
   publishedAt?: string;
+
+  // Normalized Live Commerce Extended Attributes
+  title?: string;
+  description?: string;
+  mediaType?: 'image' | 'video' | 'reel' | 'carousel' | 'unknown';
+  mediaUrl?: string | null;
+  permalink?: string;
+  likes?: number | null;
+  comments?: number | null;
+  views?: number | null;
+  channelName?: string | null;
 }
 
 export type FetchStatus = 'idle' | 'loading' | 'success' | 'error' | 'empty';

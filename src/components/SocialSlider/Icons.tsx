@@ -10,13 +10,18 @@ export const VerifiedBadge: Component<{ size?: number; class?: string }> = (prop
     class={`social-verified-badge ${props.class || ''}`}
     aria-label="Verified account"
   >
+    {/* 8-scalloped rosette starburst badge matching Meta / Instagram official design */}
     <path
+      d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.79-4-4-4-.495 0-.965.084-1.4.238C14.55 2.475 13.18 1.6 11.6 1.6c-1.58 0-2.95.875-3.6 2.148-.435-.154-.905-.238-1.4-.238-2.21 0-4 1.79-4 4 0 .495.084.965.238 1.4C1.575 9.55.7 10.92.7 12.5c0 1.58.875 2.95 2.148 3.6-.154.435-.238.905-.238 1.4 0 2.21 1.79 4 4 4 .495 0 .965-.084 1.4-.238.65 1.273 2.02 2.148 3.6 2.148 1.58 0 2.95-.875 3.6-2.148.435.154.905.238 1.4.238 2.21 0 4-1.79 4-4 0-.495-.084-.965-.238-1.4 1.273-.65 2.148-2.02 2.148-3.6z"
       fill="#0095f6"
-      d="M12.001 2.006c-1.1 0-2.1.2-3.1.6-.9-.6-2-.9-3.2-.9-2.3 0-4.3 1.6-4.9 3.8-.2.7-.6 1.4-1.2 2-1.2 1.3-1.6 3.3-1 5 .2.7.5 1.3.5 2 0 .7-.3 1.3-.5 2-.6 1.7-.2 3.7 1 5 .6.6 1 1.3 1.2 2 .6 2.2 2.6 3.8 4.9 3.8 1.2 0 2.3-.3 3.2-.9 1 .4 2 .6 3.1.6s2.1-.2 3.1-.6c.9.6 2 .9 3.2.9 2.3 0 4.3-1.6 4.9-3.8.2-.7.6-1.4 1.2-2 1.2-1.3 1.6-3.3 1-5-.2-.7-.5-1.3-.5-2 0-.7.3-1.3.5-2 .6-1.7.2-3.7-1-5-.6-.6-1-1.3-1.2-2-.6-2.2-2.6-3.8-4.9-3.8-1.2 0-2.3.3-3.2.9-1-.4-2-.6-3.1-.6z"
     />
+    {/* Clean rounded checkmark */}
     <path
-      fill="#ffffff"
-      d="M10.8 17.5l-4.5-4.5 1.5-1.5 3 3 6.8-6.8 1.5 1.5-8.3 8.3z"
+      d="M7.6 12.4l2.9 2.9 5.8-5.8"
+      stroke="#ffffff"
+      stroke-width="2.3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
     />
   </svg>
 );
@@ -151,11 +156,12 @@ export const InboxIcon: Component<{ size?: number }> = (props) => (
 
 export const CenterPlayButton: Component<{
   size?: number;
+  class?: string;
   onClick?: (e: MouseEvent) => void;
 }> = (props) => (
   <button
     type="button"
-    class="social-center-play-btn"
+    class={`uss-center-play-btn social-center-play-btn ${props.class || ''}`}
     aria-label="Play video"
     onClick={props.onClick}
   >
@@ -177,4 +183,57 @@ export const CenterPlayButton: Component<{
     </svg>
   </button>
 );
+
+export const InstagramIcon: Component<{ size?: number; class?: string }> = (props) => (
+  <svg
+    width={props.size || 20}
+    height={props.size || 20}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    class={`social-platform-brand-icon ${props.class || ''}`}
+    aria-hidden="true"
+  >
+    <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" stroke-width="2" />
+    <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2" />
+    <circle cx="18" cy="6" r="1.2" fill="currentColor" />
+  </svg>
+);
+
+export const YouTubeIcon: Component<{ size?: number; class?: string }> = (props) => (
+  <svg
+    width={props.size || 20}
+    height={props.size || 20}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    class={`social-platform-brand-icon ${props.class || ''}`}
+    aria-hidden="true"
+  >
+    <path
+      d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
+      fill="#FF0000"
+    />
+    <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="#ffffff" />
+  </svg>
+);
+
+export const FacebookIcon: Component<{ size?: number; class?: string }> = (props) => (
+  <svg
+    width={props.size || 20}
+    height={props.size || 20}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    class={`social-platform-brand-icon ${props.class || ''}`}
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="11" fill="#1877F2" />
+    <path
+      d="M14.5 12.5h-1.8v6h-2.5v-6H8.7v-2.1h1.5V8.8c0-1.5.9-2.3 2.3-2.3.7 0 1.3.1 1.5.1v1.7h-1c-.7 0-.9.4-.9.9v1.2h2l-.6 2.1z"
+      fill="#ffffff"
+    />
+  </svg>
+);
+
 
