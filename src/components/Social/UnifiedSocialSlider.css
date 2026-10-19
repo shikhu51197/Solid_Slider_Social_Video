@@ -529,3 +529,91 @@
   /* #0095f6 */
   transform: scale(1.15);
 }
+
+/* ── Unavailable State (Preserves Card Layout & Navigation) ── */
+.uss-unavailable-state {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  text-align: center;
+  box-sizing: border-box;
+  z-index: 3;
+}
+
+.uss-unavailable-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(24, 119, 242, 0.15);
+  border: 1px solid rgba(24, 119, 242, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.uss-unavailable-badge {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  margin-bottom: 8px;
+}
+
+.uss-unavailable-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+
+.uss-unavailable-desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #94a3b8;
+  max-width: 270px;
+  margin: 0 auto 16px;
+}
+
+.uss-unavailable-retry-btn {
+  background-color: #1877f2;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.18s ease, transform 0.12s ease;
+  font-family: inherit;
+}
+
+.uss-unavailable-retry-btn:hover {
+  background-color: #0d65d9;
+  transform: scale(1.02);
+}
+
+.uss-unavailable-retry-btn:active {
+  transform: scale(0.98);
+}
+
+.uss-retry-icon {
+  font-size: 14px;
+  display: inline-block;
+}

@@ -530,12 +530,10 @@ export class FacebookLiveDataProvider implements ISocialDataProvider {
   private cacheTtlMs: number;
   private cachedResult: SocialDataResult | null = null;
   private lastFetchTimestamp = 0;
-  private fallbackCatalog: OfficialCatalogDataProvider;
 
   constructor(endpointUrl = '/api/social/facebook', cacheTtlSeconds = 300) {
     this.endpointUrl = endpointUrl;
     this.cacheTtlMs = cacheTtlSeconds * 1000;
-    this.fallbackCatalog = new OfficialCatalogDataProvider();
   }
 
   async getPosts(forceRefresh = false): Promise<SocialDataResult> {
@@ -562,6 +560,7 @@ export class FacebookLiveDataProvider implements ISocialDataProvider {
               posts: data.posts,
               status: 'success',
               dataSource: 'live-api',
+              account: data.account,
               lastRefreshedAt: new Date().toISOString(),
               cacheTtlSeconds: 300,
             };
@@ -570,37 +569,55 @@ export class FacebookLiveDataProvider implements ISocialDataProvider {
             return result;
           }
 
-          if (data && data.status === 'unconfigured') {
-            const catalogResult = await this.fallbackCatalog.getPosts();
-            const fbPosts = catalogResult.posts.filter((p) => p.platform === 'facebook');
+          // Handle API error, unconfigured, or empty results distinctly without inventing dummy posts
+          if (data && (data.status === 'error' || data.status === 'unconfigured' || data.status === 'empty')) {
             return {
-              posts: fbPosts,
-              status: 'success',
-              dataSource: 'official-catalog',
+              posts: [],
+              status: data.status === 'empty' ? 'empty' : 'error',
+              dataSource: 'live-api',
+              errorCategory: data.errorCategory || 'unknown',
               errorMessage: data.message,
+              account: data.account,
               missingIntegrationDetails: [
                 {
                   platform: 'facebook',
                   missingConfigs: ['FACEBOOK_PAGE_ID', 'FACEBOOK_PAGE_ACCESS_TOKEN'],
                   documentationUrl: 'https://developers.facebook.com/docs/graph-api',
-                  requiredScopes: data.requiredPermissions || ['pages_show_list', 'pages_read_engagement'],
+                  requiredScopes: data.requiredPermissions || ['pages_show_list', 'pages_read_engagement', 'pages_read_user_content'],
                 },
               ],
             };
           }
+        } else {
+          let errJson: any = null;
+          try {
+            errJson = await res.json();
+          } catch {}
+          return {
+            posts: [],
+            status: 'error',
+            dataSource: 'live-api',
+            errorCategory: errJson?.errorCategory || 'network_error',
+            errorMessage: errJson?.error || errJson?.message || `Facebook API returned HTTP ${res.status}`,
+          };
         }
       }
     } catch (err) {
-      // In test or offline environments, fallback cleanly
+      return {
+        posts: [],
+        status: 'error',
+        dataSource: 'live-api',
+        errorCategory: 'network_error',
+        errorMessage: err instanceof Error ? err.message : 'Network error connecting to Facebook API',
+      };
     }
 
-    const catalogResult = await this.fallbackCatalog.getPosts();
-    const fbPosts = catalogResult.posts.filter((p) => p.platform === 'facebook');
     return {
-      posts: fbPosts.length > 0 ? fbPosts : catalogResult.posts,
-      status: 'success',
-      dataSource: 'official-catalog',
-      lastRefreshedAt: new Date().toISOString(),
+      posts: [],
+      status: 'error',
+      dataSource: 'live-api',
+      errorCategory: 'network_error',
+      errorMessage: 'Failed to connect to Facebook endpoint',
     };
   }
 

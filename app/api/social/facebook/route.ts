@@ -1,4 +1,4 @@
-import { fetchFacebookPosts } from '../../../../src/server/socialApiHandler';
+import { fetchFacebookPosts, diagnoseFacebookConnection } from '../../../../src/server/socialApiHandler';
 
 /**
  * Next.js App Router Route Handler: GET /api/social/facebook
@@ -7,6 +7,13 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const pageId = url.searchParams.get('pageId') || undefined;
+    const isDiagnostic = url.searchParams.get('diagnostic') === 'true';
+
+    if (isDiagnostic) {
+      const diag = await diagnoseFacebookConnection({ pageId });
+      return Response.json(diag, { status: 200 });
+    }
+
     const limit = url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!, 10) : 10;
     const forceRefresh = url.searchParams.get('refresh') === 'true';
 
@@ -20,7 +27,7 @@ export async function GET(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to fetch Facebook posts';
     return Response.json(
-      { posts: [], source: 'facebook', error: message },
+      { posts: [], source: 'facebook', status: 'error', errorCategory: 'unknown', error: message },
       { status: 500 }
     );
   }

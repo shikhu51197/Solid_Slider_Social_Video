@@ -22,6 +22,7 @@ import {
   HeartIcon,
   ShareIcon,
   VerifiedBadge,
+  FacebookIcon,
 } from '../SocialSlider/Icons';
 import './UnifiedSocialSlider.css';
 
@@ -119,6 +120,14 @@ interface SocialCardItemProps {
   onNext: () => void;
   onSelectDot: (index: number) => void;
   isDragging: boolean;
+  unavailable?: {
+    isUnavailable: boolean;
+    category?: string;
+    badge?: string;
+    title?: string;
+    message?: string;
+    onRetry?: () => void;
+  } | null;
 }
 
 const SocialCardItem: Component<SocialCardItemProps> = (props) => {
@@ -188,24 +197,57 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
 
       {/* 2. Media Area with Overlaid Circular Arrows & Center Play Button */}
       <div class="uss-media-container">
-        <img
-          src={props.post.thumbnailUrl || '/bajaj-instagram-reel.jpg'}
-          alt={props.post.caption || 'Post media'}
-          class="uss-media-thumbnail cover"
-          loading="lazy"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = '/bajaj-instagram-reel.jpg';
-          }}
-        />
+        <Show
+          when={props.unavailable?.isUnavailable}
+          fallback={
+            <>
+              <img
+                src={props.post.thumbnailUrl || '/bajaj-instagram-reel.jpg'}
+                alt={props.post.caption || 'Post media'}
+                class="uss-media-thumbnail cover"
+                loading="lazy"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/bajaj-instagram-reel.jpg';
+                }}
+              />
 
-        {/* Center Play Button Overlay — plays only in respective application or browser */}
-        <Show when={isVideo()}>
-          <CenterPlayButton
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCardClick();
-            }}
-          />
+              {/* Center Play Button Overlay — plays only in respective application or browser */}
+              <Show when={isVideo()}>
+                <CenterPlayButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCardClick();
+                  }}
+                />
+              </Show>
+            </>
+          }
+        >
+          {/* Requirement 7 & 8: Unavailable State with Retry Option */}
+          <div class="uss-unavailable-state" onClick={(e) => e.stopPropagation()}>
+            <div class="uss-unavailable-icon-wrapper">
+              <FacebookIcon size={34} />
+            </div>
+            <div class="uss-unavailable-badge">
+              {props.unavailable?.badge || 'Unavailable'}
+            </div>
+            <div class="uss-unavailable-title">
+              {props.unavailable?.title || 'Facebook Content Unavailable'}
+            </div>
+            <div class="uss-unavailable-desc">
+              {props.unavailable?.message || 'Unable to connect to Facebook Graph API.'}
+            </div>
+            <button
+              type="button"
+              class="uss-unavailable-retry-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                props.unavailable?.onRetry?.();
+              }}
+            >
+              <span class="uss-retry-icon">↻</span> Retry Connection
+            </button>
+          </div>
         </Show>
 
         {/* Previous Slide Arrow Overlay (circular white button on media) */}
@@ -385,6 +427,15 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
   const [igPost, setIgPost] = createSignal<SocialPost>(DEFAULT_SLIDES[0]);
   const [ytPost, setYtPost] = createSignal<SocialPost>(DEFAULT_SLIDES[1]);
   const [fbPost, setFbPost] = createSignal<SocialPost>(DEFAULT_SLIDES[2]);
+  const [fbUnavailable, setFbUnavailable] = createSignal<{
+    isUnavailable: boolean;
+    category?: string;
+    badge?: string;
+    title?: string;
+    message?: string;
+    onRetry?: () => void;
+  } | null>(null);
+
   // Data providers with 5-minute (300s) caching
   const igProvider = new InstagramLiveDataProvider('/api/social/instagram', 300);
   const ytProvider = new YouTubeLiveDataProvider('@bajaj_finance_limited');
@@ -405,8 +456,55 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
       if (ytRes.status === 'fulfilled' && ytRes.value.posts?.length > 0) {
         setYtPost(ytRes.value.posts[0]);
       }
-      if (fbRes.status === 'fulfilled' && fbRes.value.posts?.length > 0) {
-        setFbPost(fbRes.value.posts[0]);
+      if (fbRes.status === 'fulfilled') {
+        const val = fbRes.value;
+        if (val.status === 'success' && val.posts?.length > 0) {
+          setFbPost(val.posts[0]);
+          setFbUnavailable(null);
+        } else {
+          if (val.account) {
+            setFbPost((prev) => ({ ...prev, account: val.account! }));
+          }
+          const cat = val.errorCategory || 'unknown';
+          let title = 'Facebook Content Unavailable';
+          let badge = 'Unavailable';
+          let message = val.errorMessage || 'Unable to connect to Facebook Graph API.';
+
+          if (cat === 'expired_token') {
+            title = 'Session Expired';
+            badge = 'Token Expired';
+            message = 'Facebook Page access token has expired. Please refresh FACEBOOK_PAGE_ACCESS_TOKEN in .env.';
+          } else if (cat === 'missing_permissions') {
+            title = 'Permissions Required';
+            badge = 'Missing Scope';
+            message = 'Facebook Page access token requires pages_read_engagement and pages_read_user_content.';
+          } else if (cat === 'rate_limited') {
+            title = 'Rate Limit Reached';
+            badge = 'Rate Limited';
+            message = 'Meta Graph API request limit reached. Please wait a moment before trying again.';
+          } else if (cat === 'network_error') {
+            title = 'Connection Offline';
+            badge = 'Network Error';
+            message = 'Unable to reach Facebook Graph API. Please check internet connectivity.';
+          } else if (cat === 'empty_results') {
+            title = 'No Posts Found';
+            badge = 'Empty Feed';
+            message = 'Connected to Facebook Page, but no public posts or photos were found.';
+          } else if (cat === 'unconfigured') {
+            title = 'Not Configured';
+            badge = 'Configuration';
+            message = 'Set FACEBOOK_PAGE_ID and FACEBOOK_PAGE_ACCESS_TOKEN in .env to connect your Page.';
+          }
+
+          setFbUnavailable({
+            isUnavailable: true,
+            category: cat,
+            badge,
+            title,
+            message,
+            onRetry: () => refreshAll(true),
+          });
+        }
       }
     } catch {
       // fallback preserved
@@ -599,6 +697,7 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
                     onNext={handleNext}
                     onSelectDot={goToSlide}
                     isDragging={isDragging() || justSwiped()}
+                    unavailable={i() === 2 ? fbUnavailable() : null}
                   />
                 </div>
               )}

@@ -1,5 +1,10 @@
 import type { Plugin } from 'vite';
-import { fetchInstagramPosts, fetchYouTubePosts, fetchFacebookPosts } from './socialApiHandler.ts';
+import {
+  fetchInstagramPosts,
+  fetchYouTubePosts,
+  fetchFacebookPosts,
+  diagnoseFacebookConnection,
+} from './socialApiHandler.ts';
 
 /**
  * Vite Dev Server Middleware Plugin providing secure server-side social API endpoints:
@@ -67,7 +72,16 @@ export function socialApiPlugin(): Plugin {
         if (parsedUrl.pathname === '/api/social/facebook') {
           res.setHeader('Content-Type', 'application/json');
           try {
+            const isDiagnostic = parsedUrl.searchParams.get('diagnostic') === 'true';
             const pageId = parsedUrl.searchParams.get('pageId') || undefined;
+
+            if (isDiagnostic) {
+              const diag = await diagnoseFacebookConnection({ pageId });
+              res.statusCode = 200;
+              res.end(JSON.stringify(diag));
+              return;
+            }
+
             const limit = parsedUrl.searchParams.get('limit')
               ? parseInt(parsedUrl.searchParams.get('limit')!, 10)
               : 10;
@@ -81,6 +95,8 @@ export function socialApiPlugin(): Plugin {
               JSON.stringify({
                 posts: [],
                 source: 'facebook',
+                status: 'error',
+                errorCategory: 'unknown',
                 error: err instanceof Error ? err.message : 'Failed to fetch Facebook posts',
               })
             );

@@ -58,6 +58,8 @@ export interface SocialDataResult {
   posts: SocialPost[];
   status: FetchStatus;
   errorMessage?: string;
+  errorCategory?: string;
+  account?: SocialAccount;
   dataSource: 'official-catalog' | 'live-api' | 'cached' | 'none';
   lastRefreshedAt?: string;
   cacheTtlSeconds?: number;
