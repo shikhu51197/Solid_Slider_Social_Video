@@ -368,20 +368,34 @@ export class YouTubeLiveDataProvider implements ISocialDataProvider {
     }
 
     if (!this.apiKey) {
-      return {
-        posts: [],
-        status: 'error',
-        errorMessage: 'YouTube API key is missing. Set VITE_YOUTUBE_API_KEY in .env.',
-        dataSource: 'none',
-        missingIntegrationDetails: [
-          {
-            platform: 'youtube',
-            missingConfigs: ['VITE_YOUTUBE_API_KEY'],
-            documentationUrl: 'https://developers.google.com/youtube/v3',
-            requiredScopes: ['https://www.googleapis.com/auth/youtube.readonly'],
-          },
-        ],
-      };
+      try {
+        const query = new URLSearchParams({ handle: this.channelHandle });
+        if (forceRefresh) query.set('refresh', 'true');
+        const response = await fetch(`/api/social/youtube?${query}`, {
+          headers: { Accept: 'application/json' },
+          cache: forceRefresh ? 'no-cache' : 'default',
+        });
+        if (!response.ok) throw new Error('YouTube server request failed');
+        const data = await response.json();
+        if (!Array.isArray(data.posts)) throw new Error('Invalid YouTube response');
+        const result: SocialDataResult = {
+          posts: data.posts,
+          status: data.posts.length > 0 ? 'success' : 'empty',
+          dataSource: 'live-api',
+          lastRefreshedAt: new Date().toISOString(),
+          cacheTtlSeconds: Math.floor(this.cacheTtlMs / 1000),
+        };
+        this.cachedResult = result;
+        this.lastFetchTimestamp = now;
+        return result;
+      } catch {
+        return {
+          posts: [],
+          status: 'error',
+          errorMessage: 'Unable to load YouTube videos. Check the server YouTube configuration.',
+          dataSource: 'none',
+        };
+      }
     }
 
     try {
