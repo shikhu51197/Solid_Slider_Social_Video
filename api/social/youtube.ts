@@ -1,4 +1,4 @@
-import { fetchYouTubePosts } from '../../src/server/socialApiHandler';
+import { fetchYouTubePosts } from '../../src/server/socialApiHandler.js';
 
 async function handleWeb(request: Request) {
   try {

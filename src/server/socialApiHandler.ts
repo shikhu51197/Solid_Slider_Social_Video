@@ -1,5 +1,5 @@
-import type { SocialPost, SocialPlatform, SocialPostType, SocialAccount } from '../types/social';
-import { getPlatformDeepLink } from '../utils/deepLink';
+import type { SocialPost, SocialPlatform, SocialPostType, SocialAccount } from '../types/social.js';
+import { getPlatformDeepLink } from '../utils/deepLink.js';
 
 /**
  * Server-side Social Media API Handler.
