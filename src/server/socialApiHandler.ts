@@ -729,7 +729,7 @@ export async function fetchFacebookPosts(options?: {
     handle: 'bajaj.finance.in',
     displayName: 'Bajaj Finance Limited',
     profileUrl: pageId ? `https://www.facebook.com/${pageId}` : 'https://www.facebook.com/bajaj.finance.in/',
-    avatarUrl: '/bajaj-finserv-logo.png',
+    avatarUrl: '/facebook-logo.svg',
     followersCount: '1.2M Followers',
     isVerified: true,
     businessCategory: 'Official Page',
@@ -772,7 +772,7 @@ export async function fetchFacebookPosts(options?: {
   // Step 2: Fetch Page metadata for live name/avatar/followers
   let pageAccount = { ...defaultPageAccount };
   try {
-    const metaUrl = `https://graph.facebook.com/v26.0/${encodeURIComponent(pageId)}?fields=id,name,fan_count,link&access_token=${encodeURIComponent(token)}`;
+    const metaUrl = `https://graph.facebook.com/v26.0/${encodeURIComponent(pageId)}?fields=id,name,fan_count,link,picture.type(large)&access_token=${encodeURIComponent(token)}`;
     const metaRes = await fetch(metaUrl);
     if (metaRes.ok) {
       const metaData: any = await metaRes.json();
@@ -783,7 +783,7 @@ export async function fetchFacebookPosts(options?: {
             : `page_${pageId}`,
           displayName: metaData.name,
           profileUrl: metaData.link || `https://www.facebook.com/${pageId}`,
-          avatarUrl: '/bajaj-finserv-logo.png',
+          avatarUrl: metaData.picture?.data?.url || '/facebook-logo.svg',
           followersCount:
             metaData.fan_count != null
               ? `${formatMetricNumber(metaData.fan_count)} Followers`

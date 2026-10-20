@@ -168,7 +168,9 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
               alt={`${props.post.account.displayName} avatar`}
               class="uss-avatar"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = '/bajaj-finserv-logo.png';
+                const img = e.currentTarget as HTMLImageElement;
+                img.onerror = null;
+                img.src = props.post.platform === 'facebook' ? '/facebook-logo.svg' : '/favicon.svg';
               }}
             />
           </div>
