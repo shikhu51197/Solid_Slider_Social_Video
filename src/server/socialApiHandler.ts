@@ -213,7 +213,7 @@ export async function fetchYouTubePosts(options?: {
   const account: SocialAccount = {
     handle: channelItem.snippet?.customUrl ? `@${channelItem.snippet.customUrl.replace(/^@/, '')}` : handle,
     displayName: channelTitle,
-    profileUrl: `https://www.youtube.com/${handle.replace(/^@/, '')}`,
+    profileUrl: `https://www.youtube.com/@${handle.replace(/^@/, '')}`,
     avatarUrl,
     followersCount: subCount ? `${subCount} Subscribers` : undefined,
     isVerified: true,
