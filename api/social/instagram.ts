@@ -1,4 +1,4 @@
-import { fetchInstagramPosts } from '../../src/server/socialApiHandler.ts';
+import { fetchInstagramPosts } from '../../src/server/socialApiHandler';
 
 async function handleWeb(request: Request) {
   try {

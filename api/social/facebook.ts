@@ -1,4 +1,4 @@
-import { fetchFacebookPosts, diagnoseFacebookConnection } from '../../src/server/socialApiHandler.ts';
+import { fetchFacebookPosts, diagnoseFacebookConnection } from '../../src/server/socialApiHandler';
 
 async function handleWeb(request: Request) {
   try {

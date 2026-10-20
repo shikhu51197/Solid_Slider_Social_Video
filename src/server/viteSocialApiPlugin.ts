@@ -4,7 +4,7 @@ import {
   fetchYouTubePosts,
   fetchFacebookPosts,
   diagnoseFacebookConnection,
-} from './socialApiHandler.ts';
+} from './socialApiHandler';
 
 /**
  * Vite Dev Server Middleware Plugin providing secure server-side social API endpoints:

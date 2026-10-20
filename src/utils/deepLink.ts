@@ -4,7 +4,7 @@
  * Provides fallback to canonical web permalinks across devices.
  */
 
-import type { SocialPlatform } from '../types/social.ts';
+import type { SocialPlatform } from '../types/social';
 
 export function getPlatformDeepLink(platform: SocialPlatform, targetUrl: string): string | undefined {
   if (!targetUrl) return undefined;
