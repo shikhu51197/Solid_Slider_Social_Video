@@ -368,7 +368,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
             {props.post.platform === 'youtube'
               ? 'View more on YouTube'
               : props.post.platform === 'facebook'
-                ? 'View on Facebook'
+                ? 'View more on Facebook'
                 : 'View more on instagram'}
           </a>
         </div>
