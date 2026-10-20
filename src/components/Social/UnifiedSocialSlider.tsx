@@ -204,12 +204,14 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
           fallback={
             <>
               <img
-                src={props.post.thumbnailUrl || '/bajaj-instagram-reel.jpg'}
+                src={props.post.thumbnailUrl || '/media-placeholder.svg'}
                 alt={props.post.caption || 'Post media'}
                 class="uss-media-thumbnail cover"
                 loading="lazy"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/bajaj-instagram-reel.jpg';
+                  const img = e.currentTarget as HTMLImageElement;
+                  img.onerror = null;
+                  img.src = '/media-placeholder.svg';
                 }}
               />
 
@@ -333,6 +335,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
         </div>
 
         {/* Real Engagement Metrics (Only when returned and permitted) */}
+        <div class="uss-metrics">
         <Show when={props.post.likesCount}>
           <div class="uss-likes-count">
             {props.post.likesCount}
@@ -344,6 +347,8 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
             {props.post.viewsCount}
           </div>
         </Show>
+
+        </div>
 
         {/* Caption */}
         <div class="uss-caption">

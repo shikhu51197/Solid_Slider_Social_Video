@@ -148,9 +148,11 @@
   display: flex;
   width: 100%;
   will-change: transform;
+  align-items: stretch;
 }
 
 .uss-slide-item {
+  display: flex;
   flex: 0 0 100%;
   width: 100%;
   min-width: 100%;
@@ -186,6 +188,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 76px;
+  flex: 0 0 76px;
+  gap: 10px;
   padding: 14px 16px;
   background-color: #ffffff;
   border-bottom: 1px solid #f3f4f6;
@@ -285,6 +290,8 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
+  flex: none;
+  min-height: 0;
   background-color: #0d1117;
   overflow: hidden;
   display: flex;
@@ -296,21 +303,22 @@
   width: 100%;
   height: 100%;
   display: block;
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .uss-media-thumbnail.cover,
 .uss-media-thumbnail.contain {
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
 }
 
 .uss-card:hover .uss-media-thumbnail {
-  transform: scale(1.02);
+  transform: none;
 }
 
 /* Overlaid Circular Navigation Arrows (< and >) */
@@ -384,9 +392,11 @@
 
 /* ── 3. Card Footer ── */
 .uss-card-footer {
-  padding: 12px 16px 14px 16px;
-  display: flex;
-  flex-direction: column;
+  padding: 12px 16px 14px;
+  display: grid;
+  grid-template-rows: 28px 38px 41px 1px 21px 14px 20px;
+  gap: 8px;
+  flex: none;
   background-color: #ffffff;
 }
 
@@ -616,4 +626,59 @@
 .uss-retry-icon {
   font-size: 14px;
   display: inline-block;
+}
+/* Reserve the same rows even when a platform omits metrics or captions. */
+.uss-card-footer > * {
+  min-width: 0;
+  margin: 0;
+}
+
+.uss-metrics {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.uss-metrics > * {
+  margin: 0;
+  line-height: 19px;
+}
+
+.uss-caption {
+  height: 41px;
+}
+
+.uss-username-row svg {
+  flex-shrink: 0;
+}
+
+.uss-unavailable-state {
+  position: absolute;
+  inset: 0;
+}
+
+@media (max-width: 380px) {
+  .uss-card-header {
+    padding-inline: 10px;
+    gap: 6px;
+  }
+
+  .uss-account-meta {
+    gap: 7px;
+  }
+
+  .uss-avatar-container {
+    width: 36px;
+    height: 36px;
+  }
+
+  .uss-view-profile-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .uss-heading {
+    font-size: 22px;
+  }
 }
