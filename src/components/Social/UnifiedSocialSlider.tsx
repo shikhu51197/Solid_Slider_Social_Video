@@ -7,12 +7,13 @@ import {
   Show,
 } from 'solid-js';
 import type { SocialPost } from '../../types/social';
+import { selectLatestFacebookPost } from '../../utils/facebookFeed';
 import {
   InstagramLiveDataProvider,
   YouTubeLiveDataProvider,
   FacebookLiveDataProvider,
 } from '../../services/socialDataProvider';
-import { formatLikes, getPlatformDeepLink, openSocialLink } from '../../utils/deepLink';
+import { formatLikes, openSocialLink } from '../../utils/deepLink';
 import {
   BookmarkIcon,
   CenterPlayButton,
@@ -126,7 +127,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
   const handleCardClick = () => {
     if (props.isDragging) return;
     if (props.post.postUrl) {
-      openSocialLink(props.post.postUrl, props.post.deepLinkUrl, '_self');
+      openSocialLink(props.post.postUrl);
     }
   };
 
@@ -134,8 +135,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
     e.stopPropagation();
     if (props.isDragging) return;
     if (props.post.account.profileUrl) {
-      const appUrl = getPlatformDeepLink(props.post.platform, props.post.account.profileUrl);
-      openSocialLink(props.post.account.profileUrl, appUrl, '_self');
+      openSocialLink(props.post.account.profileUrl);
     }
   };
 
@@ -428,9 +428,10 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
   const [fbRefreshing, setFbRefreshing] = createSignal(false);
   const [fbUpdatedAt, setFbUpdatedAt] = createSignal('');
   const applyFacebookPosts = (posts: SocialPost[]) => {
-    const previousId = fbPost().id;
+    const latest = selectLatestFacebookPost(posts);
+    if (!latest) return;
     setFbPosts(posts);
-    const index = Math.max(0, posts.findIndex((post) => post.id === previousId));
+    const index = posts.indexOf(latest);
     setFbIndex(index);
     setFbPost(posts[index]);
     setFbUpdatedAt(new Date().toISOString());
@@ -550,7 +551,18 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
     const facebookInterval = setInterval(() => {
       if (!document.hidden) refreshFacebook();
     }, 60_000);
-    onCleanup(() => clearInterval(facebookInterval));
+    // Mobile browsers suspend timers in the background and restore pages from
+    // the back-forward cache. Refresh when the viewer returns to the slider.
+    const refreshWhenVisible = () => {
+      if (!document.hidden) void refreshFacebook();
+    };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    window.addEventListener('pageshow', refreshWhenVisible);
+    onCleanup(() => {
+      clearInterval(facebookInterval);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      window.removeEventListener('pageshow', refreshWhenVisible);
+    });
 
     // Optional 5-minute poll interval to keep feeds updated automatically
     const pollInterval = setInterval(() => {
