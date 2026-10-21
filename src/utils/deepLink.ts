@@ -91,5 +91,5 @@ export function openSocialLink(
 
 export function formatLikes(value: string | number): string {
   const count = String(value).trim().replace(/\s*likes?$/i, '').trim();
-  return `${count} ${Number(count.replace(/,/g, '')) === 1 ? 'Like' : 'Likes'}`;
+  return `${count} Likes`;
 }

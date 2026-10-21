@@ -78,9 +78,9 @@ describe('deepLink utility', () => {
     });
   });
 
-  it('formats singular, plural, zero and previously labelled likes', () => {
-    expect(formatLikes(1)).toBe('1 Like');
-    expect(formatLikes('1 Likes')).toBe('1 Like');
+  it('uses Likes consistently without duplicating existing labels', () => {
+    expect(formatLikes(1)).toBe('1 Likes');
+    expect(formatLikes('1 Likes')).toBe('1 Likes');
     expect(formatLikes(0)).toBe('0 Likes');
     expect(formatLikes('4,447 Likes')).toBe('4,447 Likes');
   });
