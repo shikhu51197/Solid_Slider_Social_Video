@@ -1,85 +1,87 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, fireEvent, screen, cleanup } from '@solidjs/testing-library';
+import { render, fireEvent, cleanup, waitFor } from '@solidjs/testing-library';
 import { UnifiedSocialSlider } from '../UnifiedSocialSlider';
+import type { ISocialDataProvider, SocialPost } from '../../../types/social';
 
-describe('UnifiedSocialSlider Component', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-    window.open = vi.fn();
-    sessionStorage.clear();
+function post(platform: SocialPost['platform'], id = 'live', caption = 'Live caption'): SocialPost {
+  return { id, platform, caption, postUrl: `https://www.${platform}.com/posts/${id}`,
+    account: { displayName: `${platform} Author`, handle: platform, avatarUrl: '/avatar.png', profileUrl: `https://www.${platform}.com/profile/` },
+    thumbnailUrl: '/photo.png', postType: 'image', aspectRatio: 'square', likesCount: '1', publishedAt: '2026-10-21' };
+}
+function provider(platform: SocialPost['platform']): ISocialDataProvider {
+  return { getPosts: vi.fn().mockResolvedValue({ status: 'success', dataSource: 'live-api', posts: [post(platform)] }), getAccount: vi.fn() };
+}
+function providers() { return { instagram: provider('instagram'), youtube: provider('youtube'), facebook: provider('facebook') }; }
+const selected = (root: Element) => root.querySelector('.uss-dot[aria-selected="true"]')?.getAttribute('aria-label');
+
+beforeEach(() => { sessionStorage.clear(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); });
+
+describe('reusable unified slider', () => {
+  it('renders live posts without restoring removed UI controls', async () => {
+    const view = render(() => <UnifiedSocialSlider providers={providers()} />);
+    await waitFor(() => expect(view.container.textContent).toContain('facebook Author'));
+    expect(view.container.querySelectorAll('.uss-slide-item')).toHaveLength(3);
+    expect(view.container.querySelectorAll('.uss-dot')).toHaveLength(9);
+    expect(view.queryByRole('button', { name: 'Next slide' })).toBeNull();
+    expect(view.queryByText('Refresh Facebook')).toBeNull();
+    expect(view.container.textContent).toContain('1 Likes');
   });
 
-  afterEach(() => {
-    cleanup();
+  it('updates successful platforms while another request is still pending', async () => {
+    const feeds = providers();
+    vi.mocked(feeds.facebook.getPosts).mockReturnValue(new Promise(() => {}));
+    const view = render(() => <UnifiedSocialSlider providers={feeds} />);
+    await waitFor(() => expect(view.container.textContent).toContain('instagram Author'));
+    expect(view.container.textContent).toContain('youtube Author');
   });
 
-  it('renders section title "Latest from social"', () => {
-    render(() => <UnifiedSocialSlider />);
-
-    expect(screen.getByRole('heading', { level: 2, name: 'Latest from social' })).toBeInTheDocument();
+  it('keeps loaded Facebook content during temporary failure and recovers', async () => {
+    vi.useFakeTimers();
+    const feeds = providers();
+    vi.mocked(feeds.facebook.getPosts)
+      .mockResolvedValueOnce({ status: 'success', dataSource: 'live-api', posts: [post('facebook', 'old', 'Original caption')] })
+      .mockResolvedValueOnce({ status: 'error', dataSource: 'none', posts: [], errorCategory: 'network_error' })
+      .mockResolvedValue({ status: 'success', dataSource: 'live-api', posts: [{ ...post('facebook', 'new', 'Newest caption'), account: { ...post('facebook').account, displayName: 'Updated Author' }, likesCount: '9' }] });
+    const view = render(() => <UnifiedSocialSlider providers={feeds} />);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(view.container.textContent).toContain('Original caption');
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(view.container.textContent).toContain('Original caption');
+    expect(view.container.textContent).not.toContain('Facebook Content Unavailable');
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(view.container.textContent).toContain('Newest caption');
+    expect(view.container.textContent).toContain('Updated Author');
+    expect(view.container.textContent).toContain('9 Likes');
   });
 
-  it('renders single slider with 3 slides in the strip', () => {
-    const { container } = render(() => <UnifiedSocialSlider />);
-
-    // 3 slide items in the strip
-    const slideItems = container.querySelectorAll('.uss-slide-item');
-    expect(slideItems.length).toBe(3);
-
-    // Initial slide is Instagram post matching reference
-    expect(screen.getAllByText('bajajfinance__moneyadda').length).toBeGreaterThan(0);
-    expect(screen.getByText('621K Followers')).toBeInTheDocument();
-    expect(screen.getByText('4,447 Likes')).toBeInTheDocument();
-    expect(screen.getByText('View more on Instagram')).toBeInTheDocument();
-
-    // 3 pagination dots (. . .) inside the slide card
-    const firstSlide = container.querySelectorAll('.uss-slide-item')[0];
-    const dots = firstSlide.querySelectorAll('.uss-dot');
-    expect(dots.length).toBe(3);
-    expect(dots[0]).toHaveClass('active');
+  it('isolates keyboard handling and saved state between instances and host inputs', async () => {
+    const view = render(() => <><input aria-label="Host input" /><UnifiedSocialSlider title="First" storageKey="first" providers={providers()} /><UnifiedSocialSlider title="Second" storageKey="second" providers={providers()} /></>);
+    const [first, second] = view.container.querySelectorAll('section');
+    fireEvent.keyDown(view.getByLabelText('Host input'), { key: 'ArrowRight' });
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(selected(first)).toBe('Slide 1 of 3');
+    fireEvent.keyDown(first.querySelector('.uss-card')!, { key: 'ArrowRight' });
+    expect(selected(first)).toBe('Slide 2 of 3');
+    expect(selected(second)).toBe('Slide 1 of 3');
+    expect(sessionStorage.getItem('first')).toBe('1');
+    expect(sessionStorage.getItem('second')).toBeNull();
+    view.unmount();
+    const restored = render(() => <UnifiedSocialSlider storageKey="first" providers={providers()} />);
+    expect(selected(restored.container)).toBe('Slide 2 of 3');
   });
 
-  it('provides overlaid next and previous arrow buttons that navigate slides', () => {
-    const { container } = render(() => <UnifiedSocialSlider />);
-
-    const nextButtons = screen.getAllByRole('button', { name: 'Next slide' });
-    expect(nextButtons.length).toBeGreaterThan(0);
-
-    // Click next slide button
-    fireEvent.click(nextButtons[0]);
-
-    // Slide 2 is now active
-    const dots = container.querySelectorAll('.uss-dot');
-    expect(dots[1]).toHaveClass('active');
-
-    // Click previous slide button
-    const prevButtons = screen.getAllByRole('button', { name: 'Previous slide' });
-    fireEvent.click(prevButtons[0]);
-    expect(dots[0]).toHaveClass('active');
-  });
-
-  it('switches slides when pagination dots are clicked', () => {
-    const { container } = render(() => <UnifiedSocialSlider />);
-
-    const dots = container.querySelectorAll('.uss-dot');
-    expect(dots[0]).toHaveClass('active');
-
-    // Click dot 2 (YouTube)
-    fireEvent.click(dots[1]);
-    expect(dots[1]).toHaveClass('active');
-
-    // Click dot 3 (Facebook)
-    fireEvent.click(dots[2]);
-    expect(dots[2]).toHaveClass('active');
-  });
-
-  it('has Live Refresh button to trigger real-time updates', () => {
-    render(() => <UnifiedSocialSlider />);
-
-    const refreshBtn = screen.getByRole('button', { name: /Refresh live feeds/i });
-    expect(refreshBtn).toBeInTheDocument();
-
-    fireEvent.click(refreshBtn);
-    expect(refreshBtn).toBeInTheDocument();
+  it('refreshes on page return and cleans up timers/listeners on unmount', async () => {
+    vi.useFakeTimers();
+    const feeds = providers();
+    const view = render(() => <UnifiedSocialSlider providers={feeds} />);
+    await vi.advanceTimersByTimeAsync(0);
+    fireEvent(window, new Event('pageshow'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(feeds.facebook.getPosts).toHaveBeenCalledTimes(2);
+    view.unmount();
+    fireEvent(window, new Event('pageshow'));
+    await vi.advanceTimersByTimeAsync(300_000);
+    expect(feeds.facebook.getPosts).toHaveBeenCalledTimes(2);
   });
 });

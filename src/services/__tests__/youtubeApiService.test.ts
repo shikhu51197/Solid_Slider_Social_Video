@@ -144,90 +144,24 @@ describe('YouTube API Service & Metrics Parser', () => {
     });
   });
 
-  describe('YouTubeLiveDataProvider integration', () => {
-    it('returns error when API key is missing and identifies missing configs', async () => {
-      const provider = new YouTubeLiveDataProvider('@bajaj_finance_limited', '');
-      const result = await provider.getPosts();
-
+  describe('YouTubeLiveDataProvider server integration', () => {
+    it('returns a controlled error when the server feed fails', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({ ok: false } as Response);
+      const result = await new YouTubeLiveDataProvider().getPosts();
       expect(result.status).toBe('error');
-      expect(result.missingIntegrationDetails).toBeDefined();
-      expect(result.missingIntegrationDetails![0].platform).toBe('youtube');
+      expect(result.posts).toHaveLength(0);
     });
-
-    it('returns live posts formatted for the Social Media Slider', async () => {
-      const channelMock = {
-        items: [
-          {
-            id: 'UCTngumZeLr6bj7IJFOryd_A',
-            snippet: {
-              title: 'Bajaj Finance',
-              customUrl: '@bajaj_finance_limited',
-              thumbnails: { high: { url: '/avatar.jpg' } },
-            },
-            contentDetails: {
-              relatedPlaylists: { uploads: 'UUTngumZeLr6bj7IJFOryd_A' },
-            },
-            statistics: { subscriberCount: '204000' },
-          },
-        ],
-      };
-
-      const playlistMock = {
-        items: [
-          { contentDetails: { videoId: 'vid-1' } },
-          { contentDetails: { videoId: 'vid-2' } },
-        ],
-      };
-
-      const videosMock = {
-        items: [
-          {
-            id: 'vid-1',
-            snippet: {
-              title: 'Test Video 1',
-              thumbnails: { high: { url: '/thumb1.jpg' } },
-              publishedAt: '2026-10-18T10:00:00Z',
-            },
-            statistics: { viewCount: '1500', likeCount: '75' },
-          },
-          {
-            id: 'vid-2',
-            snippet: {
-              title: 'Test Video 2',
-              thumbnails: { high: { url: '/thumb2.jpg' } },
-              publishedAt: '2026-10-17T10:00:00Z',
-            },
-            statistics: { viewCount: '800' }, // Comments and likes hidden
-          },
-        ],
-      };
-
-      vi.spyOn(globalThis, 'fetch')
-        .mockResolvedValueOnce({ ok: true, json: async () => channelMock } as Response)
-        .mockResolvedValueOnce({ ok: true, json: async () => playlistMock } as Response)
-        .mockResolvedValueOnce({ ok: true, json: async () => videosMock } as Response);
-
-      const provider = new YouTubeLiveDataProvider('@bajaj_finance_limited', 'dummy-key');
+    it('uses the server endpoint even if a caller passes an old client key', async () => {
+      const posts = [{ id: 'live-video', platform: 'youtube', account: { displayName: 'Live channel' }, likesCount: '75' }];
+      vi.mocked(fetch).mockResolvedValueOnce({ ok: true, json: async () => ({ posts }) } as Response);
+      const provider = new YouTubeLiveDataProvider('@bajaj_finance_limited', 'never-send-this-key');
       const result = await provider.getPosts();
-
       expect(result.status).toBe('success');
-      expect(result.dataSource).toBe('live-api');
-      expect(result.posts).toHaveLength(2);
-
-      const post1 = result.posts[0];
-      expect(post1.account.displayName).toBe('Bajaj Finance');
-      expect(post1.account.handle).toBe('@bajaj_finance_limited');
-      expect(post1.account.followersCount).toBe('204K Subscribers');
-      expect(post1.platform).toBe('youtube');
-      expect(post1.likesCount).toBe('75');
-      expect(post1.viewsCount).toBe('1.5K views');
-      expect(post1.videoId).toBe('vid-1');
-      expect(post1.postUrl).toBe('https://www.youtube.com/watch?v=vid-1');
-
-      const post2 = result.posts[1];
-      expect(post2.likesCount).toBeUndefined();
-      expect(post2.commentsCount).toBeUndefined();
-      expect(post2.viewsCount).toBe('800 views');
+      expect(result.posts).toEqual(posts);
+      expect(vi.mocked(fetch).mock.calls[0][0]).toBe('/api/social/youtube?handle=%40bajaj_finance_limited');
+      expect(JSON.stringify(vi.mocked(fetch).mock.calls)).not.toContain('never-send-this-key');
+      await provider.getPosts();
+      expect(fetch).toHaveBeenCalledTimes(1);
     });
   });
 });

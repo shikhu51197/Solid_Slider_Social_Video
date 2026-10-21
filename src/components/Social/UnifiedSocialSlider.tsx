@@ -6,7 +6,7 @@ import {
   onMount,
   Show,
 } from 'solid-js';
-import type { SocialPost } from '../../types/social';
+import type { SocialPost, ISocialDataProvider, SocialDataResult } from '../../types/social';
 import { selectLatestFacebookPost } from '../../utils/facebookFeed';
 import {
   InstagramLiveDataProvider,
@@ -83,21 +83,6 @@ const DEFAULT_SLIDES: SocialPost[] = [
   },
 ];
 
-// Helper to format uppercase publish date matching reference: "PUBLISHED OCT 14, 2026"
-function formatPublishDate(isoDate?: string): string {
-  if (!isoDate) return 'PUBLISHED OCT 14, 2026';
-  try {
-    const d = new Date(isoDate);
-    if (isNaN(d.getTime())) return 'PUBLISHED OCT 14, 2026';
-    const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
-    const day = d.getDate();
-    const year = d.getFullYear();
-    return `PUBLISHED ${month} ${day}, ${year}`;
-  } catch {
-    return 'PUBLISHED OCT 14, 2026';
-  }
-}
-
 // ─── Single Social Card Component (Matching Reference UI exactly) ──────────────
 interface SocialCardItemProps {
   post: SocialPost;
@@ -108,10 +93,6 @@ interface SocialCardItemProps {
   onNext: () => void;
   onSelectDot: (index: number) => void;
   isDragging: boolean;
-  facebookFeed?: {
-    index: number; count: number; refreshing: boolean; updatedAt: string;
-    previous: () => void; next: () => void; refresh: () => void;
-  };
   unavailable?: {
     isUnavailable: boolean;
     category?: string;
@@ -367,11 +348,6 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
           </Show>
         </div>
 
-        {/* Publish Date */}
-        {/* <div class="uss-publish-date">
-          {props.post.platform === 'facebook' && !props.post.publishedAt ? '' : formatPublishDate(props.post.publishedAt)}
-        </div> */}
-
         {/* 3 Pagination Dots */}
         <div class="uss-dots-container" role="tablist" aria-label="Social slides pagination" onClick={(e) => e.stopPropagation()}>
           <For each={[0, 1, 2]}>
@@ -399,48 +375,26 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
 export interface UnifiedSocialSliderProps {
   title?: string;
   subtitle?: string;
+  /** Supply a stable unique key when mounting/unmounting in a SPA. */
+  storageKey?: string;
+  /** Optional adapters keep the component usable in other hosts and tests. */
+  providers?: Partial<Record<'instagram' | 'youtube' | 'facebook', ISocialDataProvider>>;
 }
 
 export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) => {
-  // Restore saved slide index on browser Back navigation
-  const getInitialIndex = () => {
-    try {
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        const saved = sessionStorage.getItem('social_slider_current_index');
-        if (saved !== null) {
-          const parsed = parseInt(saved, 10);
-          if (!isNaN(parsed) && parsed >= 0 && parsed <= 2) return parsed;
-        }
-      }
-    } catch { }
-    return 0;
-  };
-
-  // Current Slide Index: 0 = Instagram, 1 = YouTube, 2 = Facebook
-  const [currentIndex, setCurrentIndex] = createSignal(getInitialIndex());
+  let sectionRef: HTMLElement | undefined;
+  let resolvedStorageKey = '';
+  let disposed = false;
+  onCleanup(() => { disposed = true; });
+  const [currentIndex, setCurrentIndex] = createSignal(0);
 
   // Per-platform data states
   const [igPost, setIgPost] = createSignal<SocialPost>(DEFAULT_SLIDES[0]);
   const [ytPost, setYtPost] = createSignal<SocialPost>(DEFAULT_SLIDES[1]);
   const [fbPost, setFbPost] = createSignal<SocialPost>(DEFAULT_SLIDES[2]);
-  const [fbPosts, setFbPosts] = createSignal<SocialPost[]>([]);
-  const [fbIndex, setFbIndex] = createSignal(0);
-  const [fbRefreshing, setFbRefreshing] = createSignal(false);
-  const [fbUpdatedAt, setFbUpdatedAt] = createSignal('');
   const applyFacebookPosts = (posts: SocialPost[]) => {
     const latest = selectLatestFacebookPost(posts);
-    if (!latest) return;
-    setFbPosts(posts);
-    const index = posts.indexOf(latest);
-    setFbIndex(index);
-    setFbPost(posts[index]);
-    setFbUpdatedAt(new Date().toISOString());
-  };
-  const changeFacebookPost = (offset: number) => {
-    if (!fbPosts().length) return;
-    const index = (fbIndex() + offset + fbPosts().length) % fbPosts().length;
-    setFbIndex(index);
-    setFbPost(fbPosts()[index]);
+    if (latest && !disposed) setFbPost(latest);
   };
   const [fbUnavailable, setFbUnavailable] = createSignal<{
     isUnavailable: boolean;
@@ -451,108 +405,72 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
     onRetry?: () => void;
   } | null>(null);
 
-  // Data providers with 5-minute (300s) caching
-  const igProvider = new InstagramLiveDataProvider('/api/social/instagram', 300);
-  const ytProvider = new YouTubeLiveDataProvider('@bajaj_finance_limited');
-  const fbProvider = new FacebookLiveDataProvider('/api/social/facebook', 60);
+  const igProvider = props.providers?.instagram || new InstagramLiveDataProvider('/api/social/instagram', 300);
+  const ytProvider = props.providers?.youtube || new YouTubeLiveDataProvider('@bajaj_finance_limited');
+  const fbProvider = props.providers?.facebook || new FacebookLiveDataProvider('/api/social/facebook', 60);
+  let facebookRequest: Promise<void> | undefined;
+  let failures = 0;
+  let nextRetryAt = 0;
 
-  const refreshAll = async (force = false) => {
-    try {
-      // Promise.allSettled guarantees that if one platform fails, the others continue working
-      const [igRes, ytRes, fbRes] = await Promise.allSettled([
-        igProvider.getPosts(force),
-        ytProvider.getPosts(force),
-        fbProvider.getPosts(force),
-      ]);
-
-      if (igRes.status === 'fulfilled' && igRes.value.posts?.length > 0) {
-        setIgPost(igRes.value.posts[0]);
-      }
-      if (ytRes.status === 'fulfilled' && ytRes.value.posts?.length > 0) {
-        setYtPost(ytRes.value.posts[0]);
-      }
-      if (fbRes.status === 'fulfilled') {
-        const val = fbRes.value;
-        if (val.status === 'success' && val.posts?.length > 0) {
-          applyFacebookPosts(val.posts);
+  const refreshFacebook = (force = false): Promise<void> => {
+    if (facebookRequest) return facebookRequest;
+    if (disposed || (!force && Date.now() < nextRetryAt)) return Promise.resolve();
+    facebookRequest = (async () => {
+      try {
+        const result = await fbProvider.getPosts(force);
+        if (disposed) return;
+        if (result.status === 'success' && result.posts.length) {
+          applyFacebookPosts(result.posts);
           setFbUnavailable(null);
+          failures = 0;
+          nextRetryAt = 0;
         } else {
-          if (val.account) {
-            setFbPost((prev) => ({ ...prev, account: val.account! }));
-          }
-          const cat = val.errorCategory || 'unknown';
-          let title = 'Facebook Content Unavailable';
-          let badge = 'Unavailable';
-          let message = val.errorMessage || 'Unable to connect to Facebook Graph API.';
-
-          if (cat === 'expired_token') {
-            title = 'Session Expired';
-            badge = 'Token Expired';
-            message = 'Facebook Page access token has expired. Please refresh FACEBOOK_PAGE_ACCESS_TOKEN in .env.';
-          } else if (cat === 'missing_permissions') {
-            title = 'Permissions Required';
-            badge = 'Missing Scope';
-            message = 'Facebook Page access token requires pages_read_engagement and pages_read_user_content.';
-          } else if (cat === 'rate_limited') {
-            title = 'Rate Limit Reached';
-            badge = 'Rate Limited';
-            message = 'Meta Graph API request limit reached. Please wait a moment before trying again.';
-          } else if (cat === 'network_error') {
-            title = 'Connection Offline';
-            badge = 'Network Error';
-            message = 'Unable to reach Facebook Graph API. Please check internet connectivity.';
-          } else if (cat === 'empty_results') {
-            title = 'No Posts Found';
-            badge = 'Empty Feed';
-            message = 'Connected to Facebook Page, but no public posts or photos were found.';
-          } else if (cat === 'unconfigured') {
-            title = 'Not Configured';
-            badge = 'Configuration';
-            message = 'Set FACEBOOK_PAGE_ID and FACEBOOK_PAGE_ACCESS_TOKEN in .env to connect your Page.';
-          }
-
-          setFbUnavailable({
-            isUnavailable: true,
-            category: cat,
-            badge,
-            title,
-            message,
-            onRetry: () => refreshAll(true),
-          });
+          handleFacebookFailure(result);
         }
+      } catch {
+        if (!disposed) handleFacebookFailure({ posts: [], status: 'error', dataSource: 'none', errorCategory: 'network_error' });
       }
-    } catch {
-      // fallback preserved
-    }
+    })().finally(() => { facebookRequest = undefined; });
+    return facebookRequest;
   };
 
-  const refreshFacebook = async () => {
-    if (fbRefreshing()) return;
-    setFbRefreshing(true);
-    try {
-      const result = await fbProvider.getPosts(true);
-      if (result.status === 'success' && result.posts.length) {
-        applyFacebookPosts(result.posts);
-        setFbUnavailable(null);
-      } else {
-        setFbPosts([]);
-        setFbPost({ ...DEFAULT_SLIDES[2], account: result.account || DEFAULT_SLIDES[2].account });
-        setFbUnavailable({ isUnavailable: true, title: 'Facebook update unavailable',
-          message: result.errorMessage || 'No Facebook posts are available.', badge: 'Unavailable',
-          onRetry: refreshFacebook });
-      }
-    } finally {
-      setFbRefreshing(false);
+  const handleFacebookFailure = (result: SocialDataResult) => {
+    failures++;
+    nextRetryAt = Date.now() + Math.min(300_000, 30_000 * 2 ** Math.min(failures - 1, 4));
+    // A temporary outage must not discard a successfully loaded public post.
+    if (fbPost().postUrl && result.status !== 'empty') return;
+    if (result.status === 'empty') setFbPost(DEFAULT_SLIDES[2]);
+    if (result.account) setFbPost(prev => ({ ...prev, account: result.account! }));
+    setFbUnavailable({ isUnavailable: true, category: result.errorCategory,
+      title: 'Facebook Content Unavailable', badge: 'Unavailable',
+      message: 'Unable to load Facebook posts. Please try again shortly.',
+      onRetry: () => { void refreshFacebook(true); } });
+  };
+
+  const refreshAll = () => {
+    // Apply each result as it arrives; one slow provider cannot block the others.
+    for (const [provider, update] of [[igProvider, setIgPost], [ytProvider, setYtPost]] as const) {
+      void provider.getPosts().then(result => {
+        if (!disposed && result.status === 'success' && result.posts.length) update(result.posts[0]);
+      }).catch(() => { /* Keep the last successfully rendered post. */ });
     }
+    void refreshFacebook();
   };
 
   onMount(() => {
-    refreshAll(false);
+    const instanceIndex = Array.from(document.querySelectorAll('[data-social-slider]')).indexOf(sectionRef!);
+    resolvedStorageKey = props.storageKey || `social-slider:${window.location.pathname}:${instanceIndex}`;
+    try {
+      const saved = Number(sessionStorage.getItem(resolvedStorageKey));
+      if (Number.isInteger(saved) && saved >= 0 && saved <= 2) setCurrentIndex(saved);
+    } catch { /* Storage may be disabled by the embedding browser. */ }
+    refreshAll();
     const facebookInterval = setInterval(() => {
-      if (!document.hidden) refreshFacebook();
+      if (!document.hidden) void refreshFacebook();
     }, 60_000);
-    // Mobile browsers suspend timers in the background and restore pages from
-    // the back-forward cache. Refresh when the viewer returns to the slider.
+    const pollInterval = setInterval(() => {
+      if (!document.hidden) refreshAll();
+    }, 300_000);
     const refreshWhenVisible = () => {
       if (!document.hidden) void refreshFacebook();
     };
@@ -560,16 +478,10 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
     window.addEventListener('pageshow', refreshWhenVisible);
     onCleanup(() => {
       clearInterval(facebookInterval);
+      clearInterval(pollInterval);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
       window.removeEventListener('pageshow', refreshWhenVisible);
     });
-
-    // Optional 5-minute poll interval to keep feeds updated automatically
-    const pollInterval = setInterval(() => {
-      refreshAll(false);
-    }, 300_000);
-
-    onCleanup(() => clearInterval(pollInterval));
   });
 
   const slides = () => [igPost(), ytPost(), fbPost()];
@@ -581,7 +493,7 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
     setCurrentIndex(idx);
     try {
       if (typeof window !== 'undefined' && window.sessionStorage) {
-        sessionStorage.setItem('social_slider_current_index', String(idx));
+        sessionStorage.setItem(resolvedStorageKey, String(idx));
       }
     } catch { }
   };
@@ -600,6 +512,9 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
   let pointerStartY = 0;
   let pointerStartTime = 0;
 
+  let swipeTimer: ReturnType<typeof setTimeout> | undefined;
+  onCleanup(() => clearTimeout(swipeTimer));
+
   const commitSwipe = (diffX: number) => {
     const elapsed = Date.now() - pointerStartTime + 1;
     const vel = Math.abs(diffX) / elapsed;
@@ -613,7 +528,8 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
     }
     setIsDragging(false);
     setDragOffset(0);
-    setTimeout(() => setJustSwiped(false), 100);
+    clearTimeout(swipeTimer);
+    swipeTimer = setTimeout(() => { if (!disposed) setJustSwiped(false); }, 100);
   };
 
   const onMouseDown = (e: MouseEvent) => {
@@ -693,25 +609,28 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    if (e.defaultPrevented || target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    e.stopPropagation();
     if (e.key === 'ArrowLeft') handlePrev();
-    else if (e.key === 'ArrowRight') handleNext();
+    else handleNext();
   };
 
   onMount(() => {
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
-    window.addEventListener('keydown', onKeyDown);
     if (viewportRef) viewportRef.addEventListener('wheel', onWheel, { passive: false });
     onCleanup(() => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('keydown', onKeyDown);
       if (viewportRef) viewportRef.removeEventListener('wheel', onWheel);
     });
   });
 
   return (
-    <section class="uss-page-wrapper" aria-label="Latest from social">
+    <section ref={sectionRef} data-social-slider class="uss-page-wrapper" aria-label={props.title || 'Latest from social'} onKeyDown={onKeyDown}>
       <div class="uss-slider-container">
         {/* Section Heading Row */}
         <div class="uss-header-row">
@@ -747,10 +666,6 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
                     onNext={handleNext}
                     onSelectDot={goToSlide}
                     isDragging={isDragging() || justSwiped()}
-                    facebookFeed={i() === 2 ? {
-                      index: fbIndex(), count: fbPosts().length, refreshing: fbRefreshing(), updatedAt: fbUpdatedAt(),
-                      previous: () => changeFacebookPost(-1), next: () => changeFacebookPost(1), refresh: refreshFacebook,
-                    } : undefined}
                     unavailable={i() === 2 ? fbUnavailable() : null}
                   />
                 </div>

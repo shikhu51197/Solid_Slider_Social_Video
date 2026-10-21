@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, fireEvent, screen, cleanup } from '@solidjs/testing-library';
+import { render, fireEvent, screen, cleanup, waitFor } from '@solidjs/testing-library';
 import { SocialMediaSlider } from '../SocialMediaSlider';
 import { createSocialDataProvider } from '../../../services/socialDataProvider';
 
@@ -81,11 +81,11 @@ describe('SocialMediaSlider Component', () => {
     await screen.findAllByText('bajajfinance__moneyadda');
 
     // Press ArrowRight
-    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    fireEvent.keyDown(screen.getByRole('region'), { key: 'ArrowRight' });
     expect(await screen.findByText(/Gupta Ji is weighing the option/)).toBeInTheDocument();
 
     // Press ArrowLeft
-    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    fireEvent.keyDown(screen.getByRole('region'), { key: 'ArrowLeft' });
     expect(await screen.findByText(/Paise save karne hain ya invest?/)).toBeInTheDocument();
   });
 
@@ -164,4 +164,19 @@ describe('SocialMediaSlider Component', () => {
 
     expect(await screen.findByText(/Paise save karne hain ya invest?/)).toBeInTheDocument();
   });
+});
+
+it('does not intercept host-page keys or navigate another slider instance', async () => {
+  const provider = createSocialDataProvider('catalog');
+  const view = render(() => <><input aria-label="Host input" /><SocialMediaSlider heading="One" storageKey="legacy-one" dataProvider={provider} /><SocialMediaSlider heading="Two" storageKey="legacy-two" dataProvider={provider} /></>);
+  await screen.findAllByText('bajajfinance__moneyadda');
+  const [first, second] = view.container.querySelectorAll('section');
+  await waitFor(() => expect(second.querySelector('.social-card')?.textContent).toContain('bajajfinance__moneyadda'));
+  fireEvent.keyDown(view.getByLabelText('Host input'), { key: 'ArrowRight' });
+  fireEvent.keyDown(window, { key: 'ArrowRight' });
+  expect(first.querySelector('.social-card')?.textContent).toContain('bajajfinance__moneyadda');
+  fireEvent.keyDown(first, { key: 'ArrowRight' });
+  expect(first.querySelector('.social-card')?.textContent).toContain('Bajaj Finance');
+  expect(second.querySelector('.social-card')?.textContent).toContain('bajajfinance__moneyadda');
+  view.unmount();
 });

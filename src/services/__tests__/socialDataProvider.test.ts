@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   OfficialCatalogDataProvider,
   LiveApiSocialDataProvider,
@@ -71,6 +71,11 @@ describe('SocialDataProvider Service Layer', () => {
   });
 
   it('createSocialDataProvider instantiates InstagramLiveDataProvider and FacebookLiveDataProvider', async () => {
+    const catalog = await new OfficialCatalogDataProvider().getPosts();
+    vi.mocked(fetch).mockImplementation(async input => {
+      const platform = String(input).includes('facebook') ? 'facebook' : 'instagram';
+      return { ok: true, json: async () => ({ status: 'success', posts: catalog.posts.filter(post => post.platform === platform) }) } as Response;
+    });
     const igProvider = createSocialDataProvider('instagram');
     const fbProvider = createSocialDataProvider('facebook');
 

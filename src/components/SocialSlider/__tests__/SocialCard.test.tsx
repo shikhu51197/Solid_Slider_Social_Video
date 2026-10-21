@@ -1,3 +1,5 @@
+vi.mock('../../../utils/deepLink', async importOriginal => ({ ...await importOriginal<typeof import('../../../utils/deepLink')>(), openSocialLink: vi.fn() }));
+import { openSocialLink } from '../../../utils/deepLink';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent, screen, cleanup } from '@solidjs/testing-library';
 import { SocialCard } from '../SocialCard';
@@ -25,6 +27,7 @@ const mockPost: SocialPost = {
 describe('SocialCard Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.clearAllMocks();
     window.open = vi.fn();
     sessionStorage.clear();
   });
@@ -116,7 +119,8 @@ describe('SocialCard Component', () => {
     const viewProfileBtn = screen.getByRole('button', { name: "View bajajfinance__emihaina's profile" });
     fireEvent.click(viewProfileBtn);
 
-    expect(window.open).toHaveBeenCalledWith('https://www.instagram.com/bajajfinance__moneyadda/', '_self', undefined);
+    expect(openSocialLink).toHaveBeenCalledWith(mockPost.account.profileUrl, expect.any(String));
+    expect(openSocialLink).toHaveBeenCalledTimes(1);
   });
 
   it('redirects to post URL on same page when post card is clicked', () => {
@@ -134,7 +138,8 @@ describe('SocialCard Component', () => {
     const card = screen.getByRole('link', { name: new RegExp(mockPost.caption) });
     fireEvent.click(card);
 
-    expect(window.open).toHaveBeenCalledWith('https://www.instagram.com/p/DeexDdAjtRN/', '_self', undefined);
+    expect(openSocialLink).toHaveBeenCalledWith(mockPost.postUrl, undefined);
+    expect(openSocialLink).toHaveBeenCalledTimes(1);
   });
 
   it('triggers onPrev and onNext when circular navigation arrows are clicked', () => {
@@ -212,7 +217,8 @@ describe('SocialCard Component', () => {
     expect(playBtn).toBeInTheDocument();
 
     fireEvent.click(playBtn);
-    expect(window.open).toHaveBeenCalledWith(videoPost.postUrl, '_self', undefined);
+    expect(openSocialLink).toHaveBeenCalledWith(videoPost.postUrl, undefined);
+    expect(openSocialLink).toHaveBeenCalledTimes(1);
   });
 
   it('hides center play button for pure image posts', () => {

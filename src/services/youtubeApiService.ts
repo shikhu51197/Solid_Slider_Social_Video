@@ -1,5 +1,6 @@
 import type { SocialAccount, SocialPost } from '../types/social';
 import { getPlatformDeepLink } from '../utils/deepLink';
+import { fetchWithTimeout as fetch } from '../utils/http';
 
 export interface YouTubeChannelInfo {
   id: string;
@@ -63,20 +64,7 @@ export function getYouTubeApiKey(customKey?: string): string {
   if (customKey && customKey.trim().length > 0) {
     return customKey.trim();
   }
-  try {
-    const envKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-    if (envKey && typeof envKey === 'string' && envKey.trim().length > 0) {
-      return envKey.trim();
-    }
-  } catch {}
-
-  try {
-    const procEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
-    if (procEnv?.VITE_YOUTUBE_API_KEY) {
-      return procEnv.VITE_YOUTUBE_API_KEY;
-    }
-  } catch {}
-
+  // Browser credentials are never read from build-time environment variables.
   return '';
 }
 

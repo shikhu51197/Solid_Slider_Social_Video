@@ -3,7 +3,7 @@
    Replicates Figma Reference UI with Accessible & Responsive Architecture
    ========================================================================== */
 
-:root {
+.social-page-container, .social-slider-wrapper {
   --social-bg-page: #f4f5f7;
   --social-card-bg: #ffffff;
   --social-card-border: #e5e7eb;

@@ -1,3 +1,4 @@
+import { fetchUpstream as fetch } from './upstreamFetch.js';
 import type { SocialPost, SocialPlatform, SocialPostType, SocialAccount } from '../types/social.js';
 import { getPlatformDeepLink } from '../utils/deepLink.js';
 
@@ -66,7 +67,7 @@ export async function fetchInstagramPosts(options?: {
   }
 
   const cacheKey = `instagram_${userId || 'me'}_${limit}`;
-  if (!options?.forceRefresh) {
+  {
     const cached = getCached<{ posts: SocialPost[]; source: 'instagram'; account?: SocialAccount }>(cacheKey);
     if (cached) return cached;
   }
@@ -180,7 +181,7 @@ export async function fetchYouTubePosts(options?: {
   }
 
   const cacheKey = `youtube_${handle}_${limit}`;
-  if (!options?.forceRefresh) {
+  {
     const cached = getCached<{ posts: SocialPost[]; source: 'youtube'; account?: SocialAccount }>(cacheKey);
     if (cached) return cached;
   }
@@ -772,7 +773,7 @@ export async function fetchFacebookPosts(options?: {
   }
 
   const cacheKey = `facebook_${pageId}_${limit}`;
-  if (!options?.forceRefresh) {
+  {
     const cached = getCached<any>(cacheKey, 60_000);
     if (cached) return cached;
   }

@@ -6,11 +6,8 @@ import type {
   SocialPost,
 } from '../types/social';
 import { getPlatformDeepLink } from '../utils/deepLink';
-import {
-  fetchYouTubeChannelSliderPosts,
-  getYouTubeApiKey,
-  type YouTubeChannelInfo,
-} from './youtubeApiService';
+import type { YouTubeChannelInfo } from './youtubeApiService';
+import { fetchWithTimeout as fetch } from '../utils/http';
 
 /**
  * Official Channel Registry supplied by the business team.
@@ -338,22 +335,18 @@ export class LiveFeedSocialDataProvider implements ISocialDataProvider {
  */
 export class YouTubeLiveDataProvider implements ISocialDataProvider {
   private channelHandle: string;
-  private apiKey: string;
   private cacheTtlMs: number;
   private cachedResult: SocialDataResult | null = null;
   private lastFetchTimestamp = 0;
-  private fallbackCatalog: OfficialCatalogDataProvider;
   private channelInfo: YouTubeChannelInfo | null = null;
 
   constructor(
     channelHandle = '@bajaj_finance_limited',
-    apiKey?: string,
+    _apiKey?: string,
     cacheTtlSeconds = 300
   ) {
     this.channelHandle = channelHandle;
-    this.apiKey = apiKey !== undefined ? apiKey : getYouTubeApiKey();
     this.cacheTtlMs = cacheTtlSeconds * 1000;
-    this.fallbackCatalog = new OfficialCatalogDataProvider();
   }
 
   async getPosts(forceRefresh = false): Promise<SocialDataResult> {
@@ -367,81 +360,22 @@ export class YouTubeLiveDataProvider implements ISocialDataProvider {
       };
     }
 
-    if (!this.apiKey) {
-      try {
-        const query = new URLSearchParams({ handle: this.channelHandle });
-        if (forceRefresh) query.set('refresh', 'true');
-        const response = await fetch(`/api/social/youtube?${query}`, {
-          headers: { Accept: 'application/json' },
-          cache: forceRefresh ? 'no-cache' : 'default',
-        });
-        if (!response.ok) throw new Error('YouTube server request failed');
-        const data = await response.json();
-        if (!Array.isArray(data.posts)) throw new Error('Invalid YouTube response');
-        const result: SocialDataResult = {
-          posts: data.posts,
-          status: data.posts.length > 0 ? 'success' : 'empty',
-          dataSource: 'live-api',
-          lastRefreshedAt: new Date().toISOString(),
-          cacheTtlSeconds: Math.floor(this.cacheTtlMs / 1000),
-        };
-        this.cachedResult = result;
-        this.lastFetchTimestamp = now;
-        return result;
-      } catch {
-        return {
-          posts: [],
-          status: 'error',
-          errorMessage: 'Unable to load YouTube videos. Check the server YouTube configuration.',
-          dataSource: 'none',
-        };
-      }
-    }
-
     try {
-      const { channel, posts } = await fetchYouTubeChannelSliderPosts(
-        this.channelHandle,
-        10,
-        this.apiKey
-      );
-      this.channelInfo = channel;
-
-      if (posts && posts.length > 0) {
-        const result: SocialDataResult = {
-          posts,
-          status: 'success',
-          dataSource: 'live-api',
-          lastRefreshedAt: new Date().toISOString(),
-          cacheTtlSeconds: Math.floor(this.cacheTtlMs / 1000),
-        };
-        this.cachedResult = result;
-        this.lastFetchTimestamp = now;
-        return result;
-      }
-
-      return {
-        posts: [],
-        status: 'empty',
-        dataSource: 'live-api',
-        lastRefreshedAt: new Date().toISOString(),
+      const query = new URLSearchParams({ handle: this.channelHandle });
+      const response = await fetch(`/api/social/youtube?${query}`, { headers: { Accept: 'application/json' } });
+      if (!response.ok) throw new Error('YouTube server request failed');
+      const data = await response.json();
+      if (!Array.isArray(data.posts)) throw new Error('Invalid YouTube response');
+      const result: SocialDataResult = {
+        posts: data.posts, status: data.posts.length ? 'success' : 'empty',
+        dataSource: 'live-api', account: data.account,
+        lastRefreshedAt: new Date().toISOString(), cacheTtlSeconds: this.cacheTtlMs / 1000,
       };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to retrieve YouTube data';
-      // Graceful fallback to verified catalog if network or quota issue occurs
-      const fallback = await this.fallbackCatalog.getPosts();
-      if (fallback.posts && fallback.posts.length > 0) {
-        return {
-          ...fallback,
-          errorMessage: `${message} (Falling back to verified catalog)`,
-        };
-      }
-
-      return {
-        posts: [],
-        status: 'error',
-        errorMessage: message,
-        dataSource: 'none',
-      };
+      this.cachedResult = result;
+      this.lastFetchTimestamp = now;
+      return result;
+    } catch {
+      return { posts: [], status: 'error', dataSource: 'none', errorMessage: 'Unable to load YouTube videos.' };
     }
   }
 
@@ -492,7 +426,7 @@ export class InstagramLiveDataProvider implements ISocialDataProvider {
           ? window.location.origin
           : 'http://127.0.0.1:5173';
         const fullUrl = this.endpointUrl.startsWith('http') ? this.endpointUrl : `${baseUrl}${this.endpointUrl}`;
-        const res = await fetch(`${fullUrl}${forceRefresh ? '?refresh=true' : ''}`, {
+        const res = await fetch(fullUrl, {
           headers: { Accept: 'application/json' },
           cache: forceRefresh ? 'no-cache' : 'default',
         });
@@ -562,7 +496,7 @@ export class FacebookLiveDataProvider implements ISocialDataProvider {
           ? window.location.origin
           : 'http://127.0.0.1:5173';
         const fullUrl = this.endpointUrl.startsWith('http') ? this.endpointUrl : `${baseUrl}${this.endpointUrl}`;
-        const res = await fetch(`${fullUrl}${forceRefresh ? '?refresh=true' : ''}`, {
+        const res = await fetch(fullUrl, {
           headers: { Accept: 'application/json' },
           cache: forceRefresh ? 'no-cache' : 'default',
         });

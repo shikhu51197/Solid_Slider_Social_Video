@@ -10,7 +10,7 @@
    - Full drag, sweep, touch, and horizontal wheel scroll support
    ============================================================================== */
 
-:root {
+.uss-page-wrapper {
   --uss-bg-page: #f4f5f7;
   --uss-card-bg: #ffffff;
   --uss-card-border: #e5e7eb;
@@ -26,6 +26,8 @@
   --uss-arrow-bg: rgba(255, 255, 255, 0.95);
   --uss-arrow-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
 }
+
+.uss-page-wrapper, .uss-page-wrapper * { box-sizing: border-box; }
 
 .uss-page-wrapper {
   width: 100%;
@@ -361,7 +363,7 @@
 
 /* Center Play Button Overlay */
 .uss-center-play-btn,
-.social-center-play-btn {
+.uss-page-wrapper .social-center-play-btn {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -381,12 +383,12 @@
 }
 
 .uss-center-play-btn:hover,
-.social-center-play-btn:hover {
+.uss-page-wrapper .social-center-play-btn:hover {
   transform: translate(-50%, -50%) scale(1.12);
 }
 
 .uss-center-play-btn:active,
-.social-center-play-btn:active {
+.uss-page-wrapper .social-center-play-btn:active {
   transform: translate(-50%, -50%) scale(0.95);
 }
 

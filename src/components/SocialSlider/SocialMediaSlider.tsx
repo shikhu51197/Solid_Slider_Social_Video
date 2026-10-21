@@ -19,6 +19,7 @@ export interface SocialMediaSliderProps {
   onSlideChange?: (index: number, post: SocialPost) => void;
   class?: string;
   allowInlinePlayback?: boolean;
+  storageKey?: string;
 }
 
 export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
@@ -27,21 +28,10 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
     status: 'loading',
     dataSource: 'official-catalog',
   });
-  // Restore saved slide index on browser Back navigation
-  const getInitialIndex = () => {
-    try {
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        const saved = sessionStorage.getItem('social_slider_current_index');
-        if (saved !== null) {
-          const parsed = parseInt(saved, 10);
-          if (!isNaN(parsed) && parsed >= 0) return parsed;
-        }
-      }
-    } catch {}
-    return 0;
-  };
-
-  const [currentIndex, setCurrentIndex] = createSignal(getInitialIndex());
+  let wrapperRef: HTMLElement | undefined;
+  let resolvedStorageKey = '';
+  let swipeTimeout: ReturnType<typeof setTimeout> | undefined;
+  const [currentIndex, setCurrentIndex] = createSignal(0);
 
   createEffect(() => {
     // Reset to first slide when data provider changes
@@ -51,8 +41,8 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
 
   createEffect(() => {
     try {
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        sessionStorage.setItem('social_slider_current_index', String(currentIndex()));
+      if (resolvedStorageKey && typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.setItem(resolvedStorageKey, String(currentIndex()));
       }
     } catch {}
   });
@@ -79,7 +69,7 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
         if (!isCancelled) {
           setDataResult(result);
           try {
-            const saved = sessionStorage.getItem('social_slider_current_index');
+            const saved = sessionStorage.getItem(resolvedStorageKey);
             if (saved !== null) {
               const parsed = parseInt(saved, 10);
               if (!isNaN(parsed) && parsed >= 0 && parsed < result.posts.length) {
@@ -160,6 +150,11 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
 
   // Keyboard navigation
   const handleGlobalKeyDown = (e: KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    if (e.defaultPrevented || target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    e.stopPropagation();
     if (e.key === 'ArrowLeft') {
       handlePrev();
     } else if (e.key === 'ArrowRight') {
@@ -221,7 +216,8 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
       }
       setIsDragging(false);
       setDragOffset(0);
-      setTimeout(() => setJustSwiped(false), 80);
+      clearTimeout(swipeTimeout);
+      swipeTimeout = setTimeout(() => setJustSwiped(false), 80);
     }
   };
 
@@ -281,7 +277,8 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
       }
       setIsDragging(false);
       setDragOffset(0);
-      setTimeout(() => setJustSwiped(false), 80);
+      clearTimeout(swipeTimeout);
+      swipeTimeout = setTimeout(() => setJustSwiped(false), 80);
     }
   };
 
@@ -306,7 +303,8 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
   };
 
   onMount(() => {
-    window.addEventListener('keydown', handleGlobalKeyDown);
+    const instanceIndex = Array.from(document.querySelectorAll('[data-legacy-social-slider]')).indexOf(wrapperRef!);
+    resolvedStorageKey = props.storageKey || `social-slider-legacy:${window.location.pathname}:${instanceIndex}`;
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
 
@@ -318,7 +316,7 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
     // Support browser Back button bfcache navigation restore
     const handleHistoryRestore = () => {
       try {
-        const saved = sessionStorage.getItem('social_slider_current_index');
+        const saved = sessionStorage.getItem(resolvedStorageKey);
         if (saved !== null) {
           const parsed = parseInt(saved, 10);
           const currentPosts = posts();
@@ -329,11 +327,11 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
       } catch {}
     };
 
+    handleHistoryRestore();
     window.addEventListener('pageshow', handleHistoryRestore);
     window.addEventListener('popstate', handleHistoryRestore);
 
     onCleanup(() => {
-      window.removeEventListener('keydown', handleGlobalKeyDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       if (trackEl) {
@@ -342,11 +340,15 @@ export const SocialMediaSlider: Component<SocialMediaSliderProps> = (props) => {
       window.removeEventListener('pageshow', handleHistoryRestore);
       window.removeEventListener('popstate', handleHistoryRestore);
       if (animTimeout) clearTimeout(animTimeout);
+      clearTimeout(swipeTimeout);
     });
   });
 
   return (
     <section
+      ref={wrapperRef}
+      data-legacy-social-slider
+      onKeyDown={handleGlobalKeyDown}
       class={`social-slider-wrapper ${props.class || ''}`}
       aria-roledescription="carousel"
       aria-label={props.heading || 'Latest from social'}
