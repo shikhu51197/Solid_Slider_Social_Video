@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-vi.mock('../socialApiHandler.js', () => ({
+vi.mock('../socialApiHandler.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../socialApiHandler.js')>(),
   fetchFacebookPosts: vi.fn(), fetchInstagramPosts: vi.fn(), fetchYouTubePosts: vi.fn(), diagnoseFacebookConnection: vi.fn(),
 }));
 import { cachedResult, createRateLimiter, createSocialEndpoint, validateQuery } from '../socialEndpoint';
@@ -58,4 +59,23 @@ it('rejects non-read methods without contacting the provider', async () => {
   const res = await createSocialEndpoint('facebook').GET(new Request('https://example.test/api/social/facebook', { method: 'POST' }));
   expect(res.status).toBe(405);
   expect(fetchFacebookPosts).toHaveBeenCalledTimes(calls);
+});
+
+// Token rotation must recover immediately, even while an expired-token error is cached.
+it('reloads Facebook after a token change without exposing credentials', async () => {
+  const { GET } = createSocialEndpoint('facebook');
+  const request = () => new Request('https://example.test/api/social/facebook?limit=4');
+  vi.stubEnv('FACEBOOK_PAGE_ACCESS_TOKEN', 'expired-test-token');
+  vi.mocked(fetchFacebookPosts).mockResolvedValueOnce({ posts: [], source: 'facebook', status: 'error', errorCategory: 'expired_token' });
+  expect((await (await GET(request())).json()).errorCategory).toBe('expired_token');
+  const calls = vi.mocked(fetchFacebookPosts).mock.calls.length;
+  await GET(request());
+  expect(fetchFacebookPosts).toHaveBeenCalledTimes(calls);
+  vi.stubEnv('FACEBOOK_PAGE_ACCESS_TOKEN', 'replacement-test-token');
+  vi.mocked(fetchFacebookPosts).mockResolvedValueOnce({ posts: [], source: 'facebook', status: 'success' });
+  const response = await GET(request());
+  expect((await response.json()).status).toBe('success');
+  expect(fetchFacebookPosts).toHaveBeenCalledTimes(calls + 1);
+  expect(JSON.stringify([...response.headers])).not.toContain('replacement-test-token');
+  vi.unstubAllEnvs();
 });

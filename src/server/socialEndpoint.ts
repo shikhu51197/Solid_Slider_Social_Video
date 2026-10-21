@@ -1,5 +1,5 @@
 import { withUpstreamBudget } from './upstreamFetch.js';
-import { diagnoseFacebookConnection, fetchFacebookPosts, fetchInstagramPosts, fetchYouTubePosts } from './socialApiHandler.js';
+import { facebookCredentialVersion, diagnoseFacebookConnection, fetchFacebookPosts, fetchInstagramPosts, fetchYouTubePosts } from './socialApiHandler.js';
 
 type Platform = 'instagram' | 'facebook' | 'youtube';
 export class RequestError extends Error {
@@ -84,7 +84,8 @@ export function createSocialEndpoint(platform: Platform) {
         return new Response(null, { status: 307, headers: { ...headers, Location: `${url.pathname}${query.canonical ? '?' + query.canonical : ''}` } });
       }
       const ttl = platform === 'facebook' ? 60 : 300;
-      const key = `${platform}:${query.canonical}`;
+      const credentialVersion = platform === 'facebook' ? `:${process.env.FACEBOOK_PAGE_ID || ''}:${facebookCredentialVersion()}` : '';
+      const key = `${platform}:${query.canonical}${credentialVersion}`;
       const data = await cachedResult(key, async () => {
         if (platform === 'facebook') return query.diagnostic ? diagnoseFacebookConnection() : fetchFacebookPosts({ limit: query.limit });
         if (platform === 'instagram') return fetchInstagramPosts({ limit: query.limit });

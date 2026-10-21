@@ -84,3 +84,24 @@ src/
 ├── index.css                   # Global reset and typography tokens
 └── index.tsx                   # Solid.js root entrypoint
 ```
+
+## Facebook works on deployment but says “Session expired” locally
+
+Local development reads its own private `FACEBOOK_PAGE_ID` and
+`FACEBOOK_PAGE_ACCESS_TOKEN`; deployment credentials are configured separately.
+Pushing code does not synchronize those credentials. Meta error code 190 with
+subcode 463 indicates an expired access token.
+
+1. Obtain a valid Page access token through the authorized Meta app/account, or
+   securely retrieve the current token from your deployment environment settings.
+2. Set it in the local `.env` (or `.env.local` override), keeping the Page ID
+   matched to the token. Check for stale overrides in `.env.development`,
+   `.env.development.local`, and the launching shell.
+3. Restart `npm run dev`, then open `/api/social/facebook?diagnostic=true`
+   locally to verify the connection. Never put a token in a browser URL.
+
+An expired token cannot be repaired by retrying requests or pushing a commit.
+This app has no OAuth renewal flow or app credentials for unattended renewal.
+Keep tokens server-side; never use a public environment variable prefix or
+commit `.env` files. The server separates cached Facebook results by credential
+fingerprint so a rotated token does not reuse the previous token's response.

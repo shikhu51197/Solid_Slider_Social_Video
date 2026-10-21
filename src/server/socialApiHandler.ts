@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { fetchUpstream as fetch } from './upstreamFetch.js';
 import type { SocialPost, SocialPlatform, SocialPostType, SocialAccount } from '../types/social.js';
 import { getPlatformDeepLink } from '../utils/deepLink.js';
@@ -341,6 +342,11 @@ export function sanitizeFacebookSecrets(str?: string | null, customToken?: strin
     .replace(/EAA[a-zA-Z0-9_\-]+/gi, '[REDACTED_OAUTH_TOKEN]');
 }
 
+/** Keep rotated credentials isolated without retaining raw tokens in cache keys. */
+export function facebookCredentialVersion(token = process.env.FACEBOOK_PAGE_ACCESS_TOKEN || ''): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
 export type FacebookErrorCategory =
   | 'unconfigured'
   | 'expired_token'
@@ -391,7 +397,7 @@ export function categorizeFacebookError(
     return {
       category: 'expired_token',
       sanitizedMessage:
-        'Facebook Page access token has expired (Session expired). Generate a refreshed Page Access Token in Meta for Developers and update FACEBOOK_PAGE_ACCESS_TOKEN in .env.',
+        'Facebook Page access token has expired (Session expired). Replace FACEBOOK_PAGE_ACCESS_TOKEN in the environment running this server. For local development, update .env or .env.local and restart the development server. A working deployment can use a different token.',
     };
   }
 
@@ -772,7 +778,7 @@ export async function fetchFacebookPosts(options?: {
     };
   }
 
-  const cacheKey = `facebook_${pageId}_${limit}`;
+  const cacheKey = `facebook_${pageId}_${limit}_${facebookCredentialVersion(token)}`;
   {
     const cached = getCached<any>(cacheKey, 60_000);
     if (cached) return cached;
