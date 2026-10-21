@@ -682,3 +682,29 @@
     font-size: 22px;
   }
 }
+
+/* Keep Facebook's text footer aligned with the reference card. */
+.uss-facebook-footer {
+  grid-template-rows: 28px 22px 41px 1px 21px 20px;
+}
+
+.uss-facebook-footer .uss-engagement-row,
+.uss-facebook-footer .uss-likes-count,
+.uss-facebook-footer .uss-caption,
+.uss-facebook-footer .uss-divider,
+.uss-facebook-footer .uss-view-more-row {
+  margin: 0;
+}
+
+.uss-facebook-footer .uss-caption-author {
+  font-weight: 700;
+}
+
+.uss-facebook-caption {
+  user-select: text;
+}
+
+/* Fill Instagram and Facebook media without side letterboxing. */
+.uss-media-thumbnail.cover.uss-media-fill {
+  object-fit: cover;
+}

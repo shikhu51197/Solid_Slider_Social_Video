@@ -576,7 +576,7 @@ export class FacebookLiveDataProvider implements ISocialDataProvider {
               dataSource: 'live-api',
               account: data.account,
               lastRefreshedAt: new Date().toISOString(),
-              cacheTtlSeconds: 300,
+              cacheTtlSeconds: Math.floor(this.cacheTtlMs / 1000),
             };
             this.cachedResult = result;
             this.lastFetchTimestamp = now;

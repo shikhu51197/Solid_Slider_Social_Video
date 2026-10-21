@@ -16,8 +16,6 @@ import { getPlatformDeepLink, openSocialLink } from '../../utils/deepLink';
 import {
   BookmarkIcon,
   CenterPlayButton,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   CommentIcon,
   HeartIcon,
   ShareIcon,
@@ -76,22 +74,11 @@ const DEFAULT_SLIDES: SocialPost[] = [
     id: 'slide-facebook',
     platform: 'facebook',
     account: {
-      handle: 'bajaj.finance.in',
-      displayName: 'Bajaj Finance Limited',
-      profileUrl: 'https://www.facebook.com/bajaj.finance.in/',
-      avatarUrl: '/bajaj-finserv-logo.png',
-      followersCount: '1.2M Followers',
-      isVerified: true,
-      businessCategory: 'Official Page',
+      handle: 'facebook', displayName: 'Facebook Page',
+      profileUrl: 'https://www.facebook.com/', avatarUrl: '/facebook-logo.svg',
     },
-    caption: 'Smart savings options designed for your future goals. Discover fixed deposit rates and flexible plans.',
-    thumbnailUrl: '/bajaj-emihaina-thumbnail.jpg',
-    postUrl: 'https://www.facebook.com/bajaj.finance.in/',
-    postType: 'image',
-    aspectRatio: 'square',
-    likesCount: '8,920 Likes',
-    commentsCount: '412',
-    publishedAt: '2026-10-14',
+    caption: '', thumbnailUrl: '/media-placeholder.svg', postUrl: '',
+    postType: 'unknown', aspectRatio: 'square',
   },
 ];
 
@@ -120,6 +107,10 @@ interface SocialCardItemProps {
   onNext: () => void;
   onSelectDot: (index: number) => void;
   isDragging: boolean;
+  facebookFeed?: {
+    index: number; count: number; refreshing: boolean; updatedAt: string;
+    previous: () => void; next: () => void; refresh: () => void;
+  };
   unavailable?: {
     isUnavailable: boolean;
     category?: string;
@@ -207,6 +198,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
                 src={props.post.thumbnailUrl || '/media-placeholder.svg'}
                 alt={props.post.caption || 'Post media'}
                 class="uss-media-thumbnail cover"
+                classList={{ 'uss-media-fill': props.post.platform === 'instagram' || props.post.platform === 'facebook' }}
                 loading="lazy"
                 onError={(e) => {
                   const img = e.currentTarget as HTMLImageElement;
@@ -254,35 +246,10 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
           </div>
         </Show>
 
-        {/* Previous Slide Arrow Overlay (circular white button on media) */}
-        <button
-          type="button"
-          class="uss-nav-arrow uss-nav-prev"
-          aria-label="Previous slide"
-          onClick={(e) => {
-            e.stopPropagation();
-            props.onPrev();
-          }}
-        >
-          <ChevronLeftIcon size={20} />
-        </button>
-
-        {/* Next Slide Arrow Overlay (circular white button on media) */}
-        <button
-          type="button"
-          class="uss-nav-arrow uss-nav-next"
-          aria-label="Next slide"
-          onClick={(e) => {
-            e.stopPropagation();
-            props.onNext();
-          }}
-        >
-          <ChevronRightIcon size={20} />
-        </button>
       </div>
 
       {/* 3. Card Footer */}
-      <footer class="uss-card-footer">
+      <footer class="uss-card-footer" classList={{ 'uss-facebook-footer': props.post.platform === 'facebook' }}>
         {/* Engagement Row: Heart, Comment, Share on left, Bookmark on right */}
         <div class="uss-engagement-row">
           <div class="uss-actions-left">
@@ -336,31 +303,46 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
 
         {/* Real Engagement Metrics (Only when returned and permitted) */}
         <div class="uss-metrics">
+        <Show when={props.post.platform === 'facebook'}>
+          <div class="uss-likes-count" aria-live="polite">
+            {props.post.likesCount !== undefined
+              ? `${String(props.post.likesCount).replace(/\s+likes?$/i, '')} ${Number(String(props.post.likesCount).replace(/,/g, '').replace(/\s+likes?$/i, '')) === 1 ? 'Like' : 'Likes'}`
+              : 'Likes unavailable'}
+          </div>
+          {/* <div class="uss-views-count">{props.post.viewsCount !== undefined ? `${props.post.viewsCount} Views` : 'Views unavailable'}</div> */}
+        </Show>
+        <Show when={props.post.platform !== 'facebook'}>
         <Show when={props.post.likesCount}>
           <div class="uss-likes-count">
-            {props.post.likesCount}
+            {props.post.likesCount} Likes
           </div>
         </Show>
 
-        <Show when={props.post.viewsCount}>
+        {/* <Show when={props.post.viewsCount}>
           <div class="uss-views-count">
             {props.post.viewsCount}
           </div>
-        </Show>
+        </Show> */}
 
+        </Show>
         </div>
 
         {/* Caption */}
-        <div class="uss-caption">
-          <span class="uss-caption-author">{props.post.account.displayName}</span>{' '}
-          {props.post.caption || props.post.title || ''}
+        <div class="uss-caption" classList={{ 'uss-facebook-caption': props.post.platform === 'facebook' }}>
+          <Show when={props.post.platform === 'facebook'} fallback={<>
+            <span class="uss-caption-author">{props.post.account.displayName}</span>{' '}
+            {props.post.caption || props.post.title || ''}
+          </>}>
+            <span class="uss-caption-author">{props.post.account.displayName}</span>{' '}
+            <span>{props.post.description || props.post.caption || props.post.title || ''}</span>
+          </Show>
         </div>
-
         {/* Horizontal Divider Line matching Reference */}
         <div class="uss-divider" />
 
         {/* Platform link — navigates in same tab */}
         <div class="uss-view-more-row">
+          <Show when={props.post.platform !== 'facebook' || Boolean(props.post.postUrl)}>
           <a
             href={props.post.postUrl}
             class="uss-view-more-link"
@@ -376,12 +358,13 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
                 ? 'View more on Facebook'
                 : 'View more on instagram'}
           </a>
+          </Show>
         </div>
 
         {/* Publish Date */}
-        <div class="uss-publish-date">
-          {formatPublishDate(props.post.publishedAt)}
-        </div>
+        {/* <div class="uss-publish-date">
+          {props.post.platform === 'facebook' && !props.post.publishedAt ? '' : formatPublishDate(props.post.publishedAt)}
+        </div> */}
 
         {/* 3 Pagination Dots */}
         <div class="uss-dots-container" role="tablist" aria-label="Social slides pagination" onClick={(e) => e.stopPropagation()}>
@@ -434,6 +417,24 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
   const [igPost, setIgPost] = createSignal<SocialPost>(DEFAULT_SLIDES[0]);
   const [ytPost, setYtPost] = createSignal<SocialPost>(DEFAULT_SLIDES[1]);
   const [fbPost, setFbPost] = createSignal<SocialPost>(DEFAULT_SLIDES[2]);
+  const [fbPosts, setFbPosts] = createSignal<SocialPost[]>([]);
+  const [fbIndex, setFbIndex] = createSignal(0);
+  const [fbRefreshing, setFbRefreshing] = createSignal(false);
+  const [fbUpdatedAt, setFbUpdatedAt] = createSignal('');
+  const applyFacebookPosts = (posts: SocialPost[]) => {
+    const previousId = fbPost().id;
+    setFbPosts(posts);
+    const index = Math.max(0, posts.findIndex((post) => post.id === previousId));
+    setFbIndex(index);
+    setFbPost(posts[index]);
+    setFbUpdatedAt(new Date().toISOString());
+  };
+  const changeFacebookPost = (offset: number) => {
+    if (!fbPosts().length) return;
+    const index = (fbIndex() + offset + fbPosts().length) % fbPosts().length;
+    setFbIndex(index);
+    setFbPost(fbPosts()[index]);
+  };
   const [fbUnavailable, setFbUnavailable] = createSignal<{
     isUnavailable: boolean;
     category?: string;
@@ -446,7 +447,7 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
   // Data providers with 5-minute (300s) caching
   const igProvider = new InstagramLiveDataProvider('/api/social/instagram', 300);
   const ytProvider = new YouTubeLiveDataProvider('@bajaj_finance_limited');
-  const fbProvider = new FacebookLiveDataProvider('/api/social/facebook', 300);
+  const fbProvider = new FacebookLiveDataProvider('/api/social/facebook', 60);
 
   const refreshAll = async (force = false) => {
     try {
@@ -466,7 +467,7 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
       if (fbRes.status === 'fulfilled') {
         const val = fbRes.value;
         if (val.status === 'success' && val.posts?.length > 0) {
-          setFbPost(val.posts[0]);
+          applyFacebookPosts(val.posts);
           setFbUnavailable(null);
         } else {
           if (val.account) {
@@ -518,8 +519,32 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
     }
   };
 
+  const refreshFacebook = async () => {
+    if (fbRefreshing()) return;
+    setFbRefreshing(true);
+    try {
+      const result = await fbProvider.getPosts(true);
+      if (result.status === 'success' && result.posts.length) {
+        applyFacebookPosts(result.posts);
+        setFbUnavailable(null);
+      } else {
+        setFbPosts([]);
+        setFbPost({ ...DEFAULT_SLIDES[2], account: result.account || DEFAULT_SLIDES[2].account });
+        setFbUnavailable({ isUnavailable: true, title: 'Facebook update unavailable',
+          message: result.errorMessage || 'No Facebook posts are available.', badge: 'Unavailable',
+          onRetry: refreshFacebook });
+      }
+    } finally {
+      setFbRefreshing(false);
+    }
+  };
+
   onMount(() => {
     refreshAll(false);
+    const facebookInterval = setInterval(() => {
+      if (!document.hidden) refreshFacebook();
+    }, 60_000);
+    onCleanup(() => clearInterval(facebookInterval));
 
     // Optional 5-minute poll interval to keep feeds updated automatically
     const pollInterval = setInterval(() => {
@@ -704,6 +729,10 @@ export const UnifiedSocialSlider: Component<UnifiedSocialSliderProps> = (props) 
                     onNext={handleNext}
                     onSelectDot={goToSlide}
                     isDragging={isDragging() || justSwiped()}
+                    facebookFeed={i() === 2 ? {
+                      index: fbIndex(), count: fbPosts().length, refreshing: fbRefreshing(), updatedAt: fbUpdatedAt(),
+                      previous: () => changeFacebookPost(-1), next: () => changeFacebookPost(1), refresh: refreshFacebook,
+                    } : undefined}
                     unavailable={i() === 2 ? fbUnavailable() : null}
                   />
                 </div>

@@ -222,11 +222,11 @@ export const SocialCard: Component<SocialCardProps> = (props) => {
               {props.post.likesCount} Likes
             </span>
           </Show>
-          <Show when={props.post.platform === 'youtube' && props.post.viewsCount}>
+          {/* <Show when={props.post.platform === 'youtube' && props.post.viewsCount}>
             <span class="social-views-count">
               {props.post.likesCount ? ' • ' : ''}{props.post.viewsCount}
             </span>
-          </Show>
+          </Show> */}
           <Show when={props.post.platform === 'youtube' && props.post.commentsCount}>
             <span class="social-comments-count">
               {(props.post.likesCount || props.post.viewsCount) ? ' • ' : ''}{props.post.commentsCount} Comments

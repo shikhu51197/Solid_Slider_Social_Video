@@ -576,55 +576,80 @@ export async function diagnoseFacebookConnection(options?: {
 /**
  * Fetch Facebook posts from /{PAGE_ID}/posts using supported fields.
  */
+// Optional fields must never prevent a permitted post from loading.
+async function readFacebookNode(id: string, fields: string, token: string): Promise<any | null> {
+  try {
+    const response = await fetch(`https://graph.facebook.com/v26.0/${encodeURIComponent(id)}?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(token)}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.error ? null : data;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchFromPostsEndpoint(
   pageId: string,
   token: string,
   limit: number,
   pageAccount: SocialAccount
 ): Promise<SocialPost[] | null> {
-  const fields = 'id,message,created_time,permalink_url,full_picture,attachments{media,type,url},likes.summary(true),comments.summary(true)';
+  const fields = 'id,message,created_time,permalink_url,full_picture';
   const url = `https://graph.facebook.com/v26.0/${encodeURIComponent(pageId)}/posts?fields=${encodeURIComponent(fields)}&limit=${limit}&access_token=${encodeURIComponent(token)}`;
+  let rawPosts: any[];
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data.data)) return null;
+    rawPosts = data.data;
+  } catch {
+    return null;
+  }
 
-  const res = await fetch(url);
-  if (!res.ok) return null;
-
-  const data: any = await res.json();
-  const rawPosts: any[] = data.data || [];
-  if (rawPosts.length === 0) return [];
-
-  return rawPosts.map((item: any) => {
+  return Promise.all(rawPosts.map(async (item: any): Promise<SocialPost> => {
+    const [attachments, engagement, author] = await Promise.all([
+      readFacebookNode(item.id, 'attachments{media,type,url,title,description,target}', token),
+      readFacebookNode(item.id, 'likes.summary(true),comments.summary(true)', token),
+      readFacebookNode(item.id, 'from{id,name,picture}', token),
+    ]);
+    const attachment = attachments?.attachments?.data?.[0];
+    const isVideo = /video|reel/i.test(attachment?.type || '') || /\/(reel|videos)\//.test(item.permalink_url || '');
+    const videoId = isVideo ? attachment?.target?.id : undefined;
+    const [video, videoViews] = videoId ? await Promise.all([
+      readFacebookNode(videoId, 'title,description,source', token),
+      readFacebookNode(videoId, 'views', token),
+    ]) : [null, null];
+    const likes = engagement?.likes?.summary?.total_count ?? null;
+    const comments = engagement?.comments?.summary?.total_count ?? null;
+    const views = typeof videoViews?.views === 'number' ? videoViews.views : null;
+    const caption = item.message || video?.description || attachment?.description || '';
+    const title = video?.title || attachment?.title || undefined;
+    const thumbnailUrl = attachment?.media?.image?.src || item.full_picture || '/media-placeholder.svg';
     const permalink = item.permalink_url || `https://www.facebook.com/${item.id}`;
-    const caption = item.message || '';
-    const attachmentImg = item.attachments?.data?.[0]?.media?.image?.src;
-    const thumbnailUrl = attachmentImg || item.full_picture || '/bajaj-emihaina-thumbnail.jpg';
-    const isVideo = item.attachments?.data?.[0]?.type?.includes('video');
-    const likes = item.likes?.summary?.total_count ?? null;
-    const comments = item.comments?.summary?.total_count ?? null;
-
+    const account = author?.from?.name ? {
+      ...pageAccount,
+      displayName: author.from.name,
+      followersCount: author.from.id === pageId ? pageAccount.followersCount : undefined,
+      isVerified: author.from.id === pageId && pageAccount.isVerified,
+      avatarUrl: author.from.picture?.data?.url || pageAccount.avatarUrl,
+      profileUrl: author.from.id ? `https://www.facebook.com/${author.from.id}` : pageAccount.profileUrl,
+    } : pageAccount;
     return {
-      id: item.id,
-      platform: 'facebook' as SocialPlatform,
-      account: pageAccount,
-      caption,
-      thumbnailUrl,
-      postUrl: permalink,
+      id: item.id, platform: 'facebook', account, caption, title,
+      description: video?.description || caption,
+      thumbnailUrl, postUrl: permalink, permalink,
       deepLinkUrl: getPlatformDeepLink('facebook', permalink),
-      postType: (isVideo ? 'video' : 'image') as SocialPostType,
-      aspectRatio: 'square',
+      postType: isVideo ? 'video' : 'image', aspectRatio: 'square',
       likesCount: likes !== null ? formatMetricNumber(likes) : undefined,
       commentsCount: comments !== null ? formatMetricNumber(comments) : undefined,
+      viewsCount: views !== null ? formatMetricNumber(views) : undefined,
       publishedAt: item.created_time,
-      title: caption ? caption.slice(0, 60) : undefined,
-      description: caption,
       mediaType: isVideo ? 'video' : 'image',
-      mediaUrl: thumbnailUrl,
-      permalink,
-      likes,
-      comments,
-      views: null,
-      channelName: pageAccount.displayName,
+      mediaUrl: video?.source || (isVideo ? null : thumbnailUrl),
+      videoId, likes, comments, views, channelName: account.displayName,
     };
-  });
+  }));
 }
 
 /**
@@ -671,7 +696,7 @@ async function fetchFromPhotosEndpoint(
     const largestImage = images.length > 0
       ? images.reduce((best, img) => (img.width * img.height > best.width * best.height ? img : best), images[0])
       : null;
-    const thumbnailUrl: string = largestImage?.source || '/bajaj-emihaina-thumbnail.jpg';
+    const thumbnailUrl: string = largestImage?.source || '/media-placeholder.svg';
     const permalink = item.link || `https://www.facebook.com/photo.php?fbid=${item.id}`;
     const caption = item.name || '';
     const engagement = engagementMap.get(item.id) || { likes: null, comments: null };
@@ -689,7 +714,7 @@ async function fetchFromPhotosEndpoint(
       likesCount: engagement.likes !== null ? formatMetricNumber(engagement.likes) : undefined,
       commentsCount: engagement.comments !== null ? formatMetricNumber(engagement.comments) : undefined,
       publishedAt: item.created_time,
-      title: caption ? caption.slice(0, 60) : undefined,
+      title: undefined,
       description: caption,
       mediaType: 'image',
       mediaUrl: thumbnailUrl,
@@ -726,13 +751,11 @@ export async function fetchFacebookPosts(options?: {
   const limit = options?.limit || 10;
 
   const defaultPageAccount: SocialAccount = {
-    handle: 'bajaj.finance.in',
-    displayName: 'Bajaj Finance Limited',
+    handle: pageId || 'facebook',
+    displayName: 'Facebook Page',
     profileUrl: pageId ? `https://www.facebook.com/${pageId}` : 'https://www.facebook.com/bajaj.finance.in/',
     avatarUrl: '/facebook-logo.svg',
-    followersCount: '1.2M Followers',
-    isVerified: true,
-    businessCategory: 'Official Page',
+    isVerified: false,
   };
 
   if (!pageId || !token) {
@@ -750,7 +773,7 @@ export async function fetchFacebookPosts(options?: {
 
   const cacheKey = `facebook_${pageId}_${limit}`;
   if (!options?.forceRefresh) {
-    const cached = getCached<any>(cacheKey);
+    const cached = getCached<any>(cacheKey, 60_000);
     if (cached) return cached;
   }
 
@@ -772,10 +795,14 @@ export async function fetchFacebookPosts(options?: {
   // Step 2: Fetch Page metadata for live name/avatar/followers
   let pageAccount = { ...defaultPageAccount };
   try {
-    const metaUrl = `https://graph.facebook.com/v26.0/${encodeURIComponent(pageId)}?fields=id,name,fan_count,link,picture.type(large)&access_token=${encodeURIComponent(token)}`;
+    const metaUrl = `https://graph.facebook.com/v26.0/${encodeURIComponent(pageId)}?fields=id,name,link,picture.type(large)&access_token=${encodeURIComponent(token)}`;
     const metaRes = await fetch(metaUrl);
     if (metaRes.ok) {
       const metaData: any = await metaRes.json();
+      const [followers, verification] = await Promise.all([
+        readFacebookNode(pageId, 'followers_count', token),
+        readFacebookNode(pageId, 'is_verified', token),
+      ]);
       if (metaData?.name && !metaData.error) {
         pageAccount = {
           handle: metaData.link
@@ -785,11 +812,10 @@ export async function fetchFacebookPosts(options?: {
           profileUrl: metaData.link || `https://www.facebook.com/${pageId}`,
           avatarUrl: metaData.picture?.data?.url || '/facebook-logo.svg',
           followersCount:
-            metaData.fan_count != null
-              ? `${formatMetricNumber(metaData.fan_count)} Followers`
-              : defaultPageAccount.followersCount,
-          isVerified: true,
-          businessCategory: 'Official Page',
+            typeof followers?.followers_count === 'number'
+              ? `${formatMetricNumber(followers.followers_count)} Followers`
+              : undefined,
+          isVerified: verification?.is_verified === true,
         };
       }
     }

@@ -22,7 +22,7 @@ async function handleWeb(request: Request) {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+        'Cache-Control': forceRefresh ? 'no-store' : 'public, s-maxage=60',
       },
     });
   } catch (err) {
@@ -76,7 +76,7 @@ export default async function handler(req: any, res?: any) {
 
     const result = await fetchFacebookPosts({ pageId, limit, forceRefresh });
 
-    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
+    res.setHeader('Cache-Control', forceRefresh ? 'no-store' : 'public, s-maxage=60');
     if (typeof res.status === 'function') {
       return res.status(200).json(result);
     }
