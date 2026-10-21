@@ -73,27 +73,23 @@ export function getPlatformDeepLink(platform: SocialPlatform, targetUrl: string)
  */
 export function openSocialLink(
   webUrl: string,
-  appUrl?: string,
+  _appUrl?: string,
   target: '_self' | '_blank' = '_self'
 ): void {
   if (!webUrl) return;
 
-  const targetUrl = appUrl && /mobile|android|iphone|ipad/i.test(navigator.userAgent) ? appUrl : webUrl;
+  // Canonical HTTPS links support OS universal/app links and remain usable
+  // when no app is installed. Custom schemes can strand users without a fallback.
+  const targetUrl = webUrl;
 
-  try {
-    const win = window.open(
-      targetUrl,
-      target,
-      target === '_blank' ? 'noopener,noreferrer' : undefined
-    );
-    if (!win && typeof window.location.assign === 'function') {
-      window.location.assign(targetUrl);
-    }
-  } catch {
-    try {
-      window.location.assign(targetUrl);
-    } catch {
-      window.location.href = targetUrl;
-    }
+  if (target === '_self') {
+    window.location.assign(targetUrl);
+    return;
   }
+  window.open(targetUrl, '_blank', 'noopener,noreferrer');
+}
+
+export function formatLikes(value: string | number): string {
+  const count = String(value).trim().replace(/\s*likes?$/i, '').trim();
+  return `${count} ${Number(count.replace(/,/g, '')) === 1 ? 'Like' : 'Likes'}`;
 }

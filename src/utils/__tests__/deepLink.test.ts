@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getPlatformDeepLink, openSocialLink } from '../deepLink';
+import { formatLikes, getPlatformDeepLink, openSocialLink } from '../deepLink';
 
 describe('deepLink utility', () => {
   beforeEach(() => {
@@ -61,45 +61,27 @@ describe('deepLink utility', () => {
     });
   });
 
-  describe('openSocialLink navigation', () => {
-    it('dispatches to window.open with _self by default', () => {
-      const openSpy = vi.fn();
-      window.open = openSpy;
-
-      openSocialLink('https://www.instagram.com/bajajfinance__moneyadda/');
-
-      expect(openSpy).toHaveBeenCalledWith(
-        'https://www.instagram.com/bajajfinance__moneyadda/',
-        '_self',
-        undefined
-      );
+  describe('browser navigation', () => {
+    it('uses the HTTPS destination even when an app link is supplied', () => {
+      const originalWindow = window;
+      const assign = vi.fn();
+      vi.stubGlobal('window', { location: { assign } });
+      try {
+        for (const platform of ['instagram', 'facebook', 'youtube']) {
+          const url = `https://www.${platform}.com/example`;
+          openSocialLink(url, `${platform}://example`);
+          expect(assign).toHaveBeenLastCalledWith(url);
+        }
+      } finally {
+        vi.stubGlobal('window', originalWindow);
+      }
     });
+  });
 
-    it('prefers appUrl on mobile devices', () => {
-      const openSpy = vi.fn();
-      window.open = openSpy;
-
-      const originalUserAgent = navigator.userAgent;
-      Object.defineProperty(navigator, 'userAgent', {
-        value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1',
-        configurable: true,
-      });
-
-      openSocialLink(
-        'https://www.instagram.com/bajajfinance__moneyadda/',
-        'instagram://user?username=bajajfinance__moneyadda'
-      );
-
-      expect(openSpy).toHaveBeenCalledWith(
-        'instagram://user?username=bajajfinance__moneyadda',
-        '_self',
-        undefined
-      );
-
-      Object.defineProperty(navigator, 'userAgent', {
-        value: originalUserAgent,
-        configurable: true,
-      });
-    });
+  it('formats singular, plural, zero and previously labelled likes', () => {
+    expect(formatLikes(1)).toBe('1 Like');
+    expect(formatLikes('1 Likes')).toBe('1 Like');
+    expect(formatLikes(0)).toBe('0 Likes');
+    expect(formatLikes('4,447 Likes')).toBe('4,447 Likes');
   });
 });

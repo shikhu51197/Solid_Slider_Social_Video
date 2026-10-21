@@ -708,3 +708,8 @@
 .uss-media-thumbnail.cover.uss-media-fill {
   object-fit: cover;
 }
+
+.uss-profile-link {
+  color: inherit;
+  text-decoration: none;
+}

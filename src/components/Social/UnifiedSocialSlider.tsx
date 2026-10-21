@@ -12,7 +12,7 @@ import {
   YouTubeLiveDataProvider,
   FacebookLiveDataProvider,
 } from '../../services/socialDataProvider';
-import { getPlatformDeepLink, openSocialLink } from '../../utils/deepLink';
+import { formatLikes, getPlatformDeepLink, openSocialLink } from '../../utils/deepLink';
 import {
   BookmarkIcon,
   CenterPlayButton,
@@ -148,11 +148,17 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
 
   return (
     <div class="uss-card" onClick={handleCardClick} role="link" tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
       aria-label={`${props.post.account.displayName}: ${props.post.caption || props.post.title || 'View post'}`}
     >
       {/* 1. Profile Header */}
       <header class="uss-card-header">
-        <div class="uss-account-meta" onClick={handleProfileClick} title="View profile">
+        <a class="uss-account-meta uss-profile-link" href={props.post.account.profileUrl} onClick={(e) => { e.preventDefault(); handleProfileClick(e); }} title="View profile">
           <div class="uss-avatar-container">
             <img
               src={props.post.account.avatarUrl || '/bajaj-finserv-logo.png'}
@@ -176,7 +182,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
               <span class="uss-followers">{props.post.account.followersCount}</span>
             </Show>
           </div>
-        </div>
+        </a>
 
         <button
           type="button"
@@ -306,7 +312,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
         <Show when={props.post.platform === 'facebook'}>
           <div class="uss-likes-count" aria-live="polite">
             {props.post.likesCount !== undefined
-              ? `${String(props.post.likesCount).replace(/\s+likes?$/i, '')} ${Number(String(props.post.likesCount).replace(/,/g, '').replace(/\s+likes?$/i, '')) === 1 ? 'Like' : 'Likes'}`
+              ? formatLikes(props.post.likesCount)
               : 'Likes unavailable'}
           </div>
           {/* <div class="uss-views-count">{props.post.viewsCount !== undefined ? `${props.post.viewsCount} Views` : 'Views unavailable'}</div> */}
@@ -314,7 +320,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
         <Show when={props.post.platform !== 'facebook'}>
         <Show when={props.post.likesCount}>
           <div class="uss-likes-count">
-            {props.post.likesCount} Likes
+            {formatLikes(props.post.likesCount!)}
           </div>
         </Show>
 
@@ -330,10 +336,10 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
         {/* Caption */}
         <div class="uss-caption" classList={{ 'uss-facebook-caption': props.post.platform === 'facebook' }}>
           <Show when={props.post.platform === 'facebook'} fallback={<>
-            <span class="uss-caption-author">{props.post.account.displayName}</span>{' '}
+            <a class="uss-caption-author uss-profile-link" href={props.post.account.profileUrl} onClick={(e) => { e.preventDefault(); handleProfileClick(e); }}>{props.post.account.displayName}</a>{' '}
             {props.post.caption || props.post.title || ''}
           </>}>
-            <span class="uss-caption-author">{props.post.account.displayName}</span>{' '}
+            <a class="uss-caption-author uss-profile-link" href={props.post.account.profileUrl} onClick={(e) => { e.preventDefault(); handleProfileClick(e); }}>{props.post.account.displayName}</a>{' '}
             <span>{props.post.description || props.post.caption || props.post.title || ''}</span>
           </Show>
         </div>
