@@ -155,7 +155,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
           <div class="uss-account-info">
             <div class="uss-username-row">
               <span class="uss-username">{props.post.account.displayName}</span>
-              <Show when={props.post.account.isVerified}>
+              <Show when={props.post.account.isVerified || props.post.platform === 'facebook'}>
                 <VerifiedBadge size={15} />
               </Show>
             </div>

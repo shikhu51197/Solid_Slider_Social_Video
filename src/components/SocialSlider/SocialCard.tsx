@@ -93,7 +93,7 @@ export const SocialCard: Component<SocialCardProps> = (props) => {
           <div class="social-account-info">
             <div class="social-username-row">
               <span class="social-username">{props.post.account.displayName}</span>
-              <Show when={props.post.account.isVerified}>
+              <Show when={props.post.account.isVerified || props.post.platform === 'facebook'}>
                 <VerifiedBadge size={15} />
               </Show>
             </div>
