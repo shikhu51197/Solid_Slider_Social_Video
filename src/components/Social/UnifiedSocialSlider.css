@@ -13,7 +13,7 @@
 .uss-page-wrapper {
   --uss-bg-page: #f4f5f7;
   --uss-card-bg: #ffffff;
-  --uss-card-border: #e5e7eb;
+  --uss-card-border: var(--neutrals-gray-grey-80-cccccc, #CCCCCC);
   --uss-card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
   --uss-text-primary: #262626;
   --uss-text-secondary: #737373;
@@ -21,7 +21,7 @@
   --uss-blue: #0095f6;
   --uss-blue-hover: #1877f2;
   --uss-blue-active: #0074cc;
-  --uss-border-radius: 16px;
+  --uss-border-radius: 8px;
   --uss-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --uss-arrow-bg: rgba(255, 255, 255, 0.95);
   --uss-arrow-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
@@ -41,7 +41,10 @@
 
 .uss-slider-container {
   width: 100%;
-  max-width: 440px;
+  max-width: 375px;
+  padding: 12px 16px;
+  gap: 8px;
+  background-color: var(--uss-card-bg);
   display: flex;
   flex-direction: column;
   margin: 0 auto;
@@ -52,12 +55,13 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 0;
   width: 100%;
 }
 
 .uss-heading {
-  font-size: 24px;
+  font-size: 18px;
+  line-height: 24px;
   font-weight: 700;
   color: #111827;
   margin: 0;
@@ -130,7 +134,7 @@
 .uss-slider-viewport {
   width: 100%;
   overflow: hidden;
-  border-radius: var(--uss-border-radius);
+  border-radius: 0;
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
@@ -165,12 +169,21 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    Card Component — White, Rounded, Drop Shadow
 ────────────────────────────────────────────────────────────────────────────── */
+.uss-post-layout {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .uss-card {
   width: 100%;
+  min-height: 558px;
+  padding: 16px;
   background-color: var(--uss-card-bg);
   border: 1px solid var(--uss-card-border);
   border-radius: var(--uss-border-radius);
-  box-shadow: var(--uss-card-shadow);
+  box-shadow: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -190,12 +203,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 76px;
-  flex: 0 0 76px;
+  height: 36px;
+  flex: 0 0 36px;
   gap: 10px;
-  padding: 14px 16px;
+  padding: 0;
+  margin-bottom: 20px;
   background-color: #ffffff;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: none;
   position: relative;
   z-index: 2;
 }
@@ -203,7 +217,7 @@
 .uss-account-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   text-decoration: none;
   color: inherit;
   flex: 1;
@@ -213,8 +227,8 @@
 
 .uss-avatar-container {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
 }
 
@@ -242,7 +256,7 @@
 }
 
 .uss-username {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--uss-text-primary);
   white-space: nowrap;
@@ -251,7 +265,7 @@
 }
 
 .uss-followers {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--uss-text-secondary);
   margin-top: 2px;
   white-space: nowrap;
@@ -263,10 +277,10 @@
 .uss-view-profile-btn {
   background-color: var(--uss-blue);
   color: #ffffff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 7px 16px;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: 4px;
   border: none;
   cursor: pointer;
   white-space: nowrap;
@@ -291,7 +305,7 @@
 .uss-media-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 311 / 340;
   flex: none;
   min-height: 0;
   background-color: #0d1117;
@@ -394,9 +408,9 @@
 
 /* ── 3. Card Footer ── */
 .uss-card-footer {
-  padding: 12px 16px 14px;
+  padding: 8px 0 0;
   display: grid;
-  grid-template-rows: 28px 38px 41px 1px 21px 14px 20px;
+  grid-template-rows: 20px 14px 42px 1px 14px;
   gap: 8px;
   flex: none;
   background-color: #ffffff;
@@ -439,7 +453,7 @@
 
 /* Likes & Views Count */
 .uss-likes-count {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--uss-text-primary);
   margin-bottom: 6px;
@@ -454,12 +468,12 @@
 
 /* Caption */
 .uss-caption {
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 14px;
   color: var(--uss-text-primary);
   margin-bottom: 8px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -489,7 +503,7 @@
 
 .uss-view-more-link {
   color: var(--uss-blue);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   text-decoration: none;
   transition: color 0.15s ease;
@@ -517,8 +531,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding-top: 10px;
-  padding-bottom: 2px;
+  padding: 0;
+  min-height: 6px;
 }
 
 .uss-dot {
@@ -644,11 +658,11 @@
 
 .uss-metrics > * {
   margin: 0;
-  line-height: 19px;
+  line-height: 14px;
 }
 
 .uss-caption {
-  height: 41px;
+  height: 42px;
 }
 
 .uss-username-row svg {
@@ -662,7 +676,7 @@
 
 @media (max-width: 380px) {
   .uss-card-header {
-    padding-inline: 10px;
+    padding-inline: 0;
     gap: 6px;
   }
 
@@ -681,13 +695,13 @@
   }
 
   .uss-heading {
-    font-size: 22px;
+    font-size: 18px;
   }
 }
 
 /* Keep Facebook's text footer aligned with the reference card. */
 .uss-facebook-footer {
-  grid-template-rows: 28px 22px 41px 1px 21px 20px;
+  grid-template-rows: 20px 14px 42px 1px 14px;
 }
 
 .uss-facebook-footer .uss-engagement-row,

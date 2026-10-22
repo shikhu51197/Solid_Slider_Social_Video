@@ -128,6 +128,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
     props.post.platform === 'youtube';
 
   return (
+    <div class="uss-post-layout">
     <div class="uss-card" onClick={handleCardClick} role="link" tabIndex={0}
       onKeyDown={(e) => {
         if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
@@ -348,7 +349,9 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
           </Show>
         </div>
 
-        {/* 3 Pagination Dots */}
+      </footer>
+    </div>
+        {/* Pagination sits below the bordered post in the Figma variant. */}
         <div class="uss-dots-container" role="tablist" aria-label="Social slides pagination" onClick={(e) => e.stopPropagation()}>
           <For each={[0, 1, 2]}>
             {(idx) => (
@@ -366,7 +369,6 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
             )}
           </For>
         </div>
-      </footer>
     </div>
   );
 };
