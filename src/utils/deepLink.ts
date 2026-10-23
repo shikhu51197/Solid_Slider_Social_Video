@@ -68,8 +68,8 @@ export function getPlatformDeepLink(platform: SocialPlatform, targetUrl: string)
 
 /**
  * Dispatches navigation to a social link.
- * Defaults to navigating on the same page (_self) so that browser back button
- * returns directly to the original slider page, while supporting _blank when requested.
+ * Keeps the slider tab open for Instagram on mobile, where the OS may hand
+ * navigation to the app and its Back button controls the app's own history.
  */
 export function openSocialLink(
   webUrl: string,
@@ -81,8 +81,10 @@ export function openSocialLink(
   // Canonical HTTPS links support OS universal/app links and remain usable
   // when no app is installed. Custom schemes can strand users without a fallback.
   const targetUrl = webUrl;
+  const isMobile = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInstagram = /^https:\/\/(?:www\.)?instagram\.com(?:\/|$)/i.test(webUrl);
 
-  if (target === '_self') {
+  if (target === '_self' && !(isMobile && isInstagram)) {
     window.location.assign(targetUrl);
     return;
   }

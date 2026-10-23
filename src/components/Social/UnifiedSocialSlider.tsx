@@ -40,7 +40,7 @@ const DEFAULT_SLIDES: SocialPost[] = [
       businessCategory: 'Creator Account',
     },
     caption: 'Paise save karne hain ya invest? FD aur mutual funds dono popular options hain, lekin dono ka...',
-    thumbnailUrl: '/bajaj-instagram-reel.jpg',
+    thumbnailUrl: '/media-placeholder.svg',
     postUrl: 'https://www.instagram.com/p/DBI1ZlSSwR9/',
     postType: 'reel',
     aspectRatio: 'portrait',
@@ -61,7 +61,7 @@ const DEFAULT_SLIDES: SocialPost[] = [
       businessCategory: 'Official Channel',
     },
     caption: 'SIP Plans for 3 Years: Investment Options, Risks and Selection with Bajaj Finance Money Adda.',
-    thumbnailUrl: '/youtube-sip-thumbnail.jpg',
+    thumbnailUrl: '/media-placeholder.svg',
     postUrl: 'https://www.youtube.com/watch?v=IE1HNML-FKg',
     videoId: 'IE1HNML-FKg',
     postType: 'video',
@@ -104,7 +104,7 @@ interface SocialCardItemProps {
 }
 
 const SocialCardItem: Component<SocialCardItemProps> = (props) => {
-  // Navigate in the SAME tab so browser back returns to original page
+  // The shared navigation helper preserves the slider tab on mobile Instagram.
   const handleCardClick = () => {
     if (props.isDragging) return;
     if (props.post.postUrl) {
@@ -143,7 +143,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
         <a class="uss-account-meta uss-profile-link" href={props.post.account.profileUrl} onClick={(e) => { e.preventDefault(); handleProfileClick(e); }} title="View profile">
           <div class="uss-avatar-container">
             <img
-              src={props.post.account.avatarUrl || '/bajaj-finserv-logo.png'}
+              src={props.post.account.avatarUrl || '/favicon.svg'}
               alt={`${props.post.account.displayName} avatar`}
               class="uss-avatar"
               onError={(e) => {
@@ -187,7 +187,9 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
                 alt={props.post.caption || 'Post media'}
                 class="uss-media-thumbnail cover"
                 classList={{ 'uss-media-fill': props.post.platform === 'instagram' || props.post.platform === 'facebook' }}
-                loading="lazy"
+                loading={props.slideIndex === props.activeSlideIndex ? 'eager' : 'lazy'}
+                fetchpriority={props.slideIndex === props.activeSlideIndex ? 'high' : 'low'}
+                decoding="async"
                 onError={(e) => {
                   const img = e.currentTarget as HTMLImageElement;
                   img.onerror = null;

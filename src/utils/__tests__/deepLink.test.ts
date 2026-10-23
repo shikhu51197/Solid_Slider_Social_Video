@@ -62,6 +62,23 @@ describe('deepLink utility', () => {
   });
 
   describe('browser navigation', () => {
+    it.each(['Android 14', 'iPhone OS 18_0'])('preserves the slider tab on %s for Instagram', (userAgent) => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(userAgent);
+      const assign = vi.fn();
+      const open = vi.fn();
+      vi.stubGlobal('window', { location: { assign }, open });
+      try {
+        const url = 'https://www.instagram.com/reel/example/';
+        openSocialLink(url);
+        expect(open).toHaveBeenCalledWith(url, '_blank', 'noopener,noreferrer');
+        expect(assign).not.toHaveBeenCalled();
+        openSocialLink('https://www.facebook.com/example');
+        expect(assign).toHaveBeenCalledWith('https://www.facebook.com/example');
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
     it('uses the HTTPS destination even when an app link is supplied', () => {
       const originalWindow = window;
       const assign = vi.fn();

@@ -249,6 +249,7 @@ export const SocialCard: Component<SocialCardProps> = (props) => {
             href={props.post.postUrl}
             class="social-view-more-link"
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               handleCardClick();
             }}
