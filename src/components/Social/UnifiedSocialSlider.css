@@ -15,7 +15,7 @@
   --uss-card-bg: #ffffff;
   --uss-card-border: var(--neutrals-gray-grey-80-cccccc, #CCCCCC);
   --uss-card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
-  --uss-text-primary: #262626;
+  --uss-text-primary: #1a1a1a;
   --uss-text-secondary: #737373;
   --uss-text-muted: #8e8e8e;
   --uss-icon-color: #666666;
@@ -25,7 +25,7 @@
   --uss-blue-hover: #1877f2;
   --uss-blue-active: #0074cc;
   --uss-border-radius: 8px;
-  --uss-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --uss-font: Arial, Helvetica, sans-serif;
   --uss-arrow-bg: rgba(255, 255, 255, 0.95);
   --uss-arrow-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
 }
@@ -66,9 +66,9 @@
   font-size: 18px;
   line-height: 24px;
   font-weight: 700;
-  color: #111827;
+  color: #1a1a1a;
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: normal;
   text-align: left;
 }
 
@@ -181,8 +181,8 @@
 
 .uss-card {
   width: 100%;
-  min-height: 558px;
-  padding: 16px;
+  min-height: 0;
+  padding: 15px;
   background-color: var(--uss-card-bg);
   border: 1px solid var(--uss-card-border);
   border-radius: var(--uss-border-radius);
@@ -281,8 +281,8 @@
   background-color: var(--uss-blue);
   color: #ffffff;
   font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
+  font-weight: 700;
+  padding: 6px 10px;
   border-radius: 4px;
   border: none;
   cursor: pointer;
@@ -413,7 +413,7 @@
 .uss-card-footer {
   padding: 8px 0 0;
   display: grid;
-  grid-template-rows: 20px 14px 42px 1px 14px;
+  grid-template-rows: minmax(20px, auto) minmax(14px, auto) minmax(42px, auto) 1px minmax(14px, auto);
   gap: 8px;
   flex: none;
   background-color: #ffffff;
@@ -495,7 +495,7 @@
 /* Subtle Horizontal Divider Line (Matching User Reference) */
 .uss-divider {
   height: 1px;
-  background-color: #eaecf0;
+  background-color: #cccccc;
   border: none;
   margin: 14px 0 12px 0;
   width: 100%;
@@ -508,9 +508,9 @@
 }
 
 .uss-view-more-link {
-  color: var(--uss-blue);
+  color: #1a7fff;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   transition: color 0.15s ease;
   display: inline-block;
@@ -536,28 +536,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 0;
   padding: 0;
-  min-height: 6px;
+  min-height: 24px;
 }
 
 .uss-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--uss-dot-inactive);
+  width: 12px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--uss-dot-inactive);
   border: none;
   padding: 0;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
+.uss-dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 .uss-dot:hover {
-  background-color: var(--uss-dot-active);
+  color: var(--uss-dot-active);
 }
 
 .uss-dot.active {
-  background-color: var(--uss-dot-active);
+  color: var(--uss-dot-active);
 }
 
 /* ── Unavailable State (Preserves Card Layout & Navigation) ── */
@@ -657,7 +667,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .uss-metrics > * {
@@ -666,7 +676,7 @@
 }
 
 .uss-caption {
-  height: 42px;
+  min-height: 42px;
 }
 
 .uss-username-row svg {
@@ -678,34 +688,9 @@
   inset: 0;
 }
 
-@media (max-width: 380px) {
-  .uss-card-header {
-    padding-inline: 0;
-    gap: 6px;
-  }
-
-  .uss-account-meta {
-    gap: 7px;
-  }
-
-  .uss-avatar-container {
-    width: 36px;
-    height: 36px;
-  }
-
-  .uss-view-profile-btn {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
-  .uss-heading {
-    font-size: 18px;
-  }
-}
-
 /* Keep Facebook's text footer aligned with the reference card. */
 .uss-facebook-footer {
-  grid-template-rows: 20px 14px 42px 1px 14px;
+  grid-template-rows: minmax(20px, auto) minmax(14px, auto) minmax(42px, auto) 1px minmax(14px, auto);
 }
 
 .uss-facebook-footer .uss-engagement-row,
@@ -732,4 +717,70 @@
 .uss-profile-link {
   color: inherit;
   text-decoration: none;
+}
+
+/* Size to the embedding column as well as the device viewport. */
+.uss-page-wrapper {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.uss-slider-container,
+.uss-post-layout,
+.uss-card,
+.uss-username-row {
+  min-width: 0;
+}
+
+.uss-heading,
+.uss-view-more-link,
+.uss-unavailable-title {
+  overflow-wrap: anywhere;
+}
+
+.uss-view-profile-btn {
+  min-height: 26px;
+  line-height: 14px;
+}
+
+.uss-card-footer {
+  line-height: 14px;
+}
+
+.uss-icon-btn svg {
+  flex-shrink: 0;
+}
+
+.uss-page-wrapper :is(button, a):focus-visible {
+  outline: 2px solid var(--uss-dot-active);
+  outline-offset: 2px;
+}
+
+.uss-dot:focus-visible {
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+@container (max-width: 340px) {
+  .uss-slider-container { padding-inline: 12px; }
+  .uss-card { padding: 12px; }
+  .uss-card-header { gap: 6px; }
+  .uss-account-meta { gap: 6px; }
+}
+
+@container (max-width: 280px) {
+  .uss-card-header {
+    height: auto;
+    flex-basis: auto;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    margin-bottom: 12px;
+  }
+  .uss-account-meta { flex-basis: 100%; }
+  .uss-unavailable-state { padding: 8px; overflow-y: auto; justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uss-page-wrapper *,
+  .uss-slides-strip { transition: none !important; animation: none !important; }
 }
