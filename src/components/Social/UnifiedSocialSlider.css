@@ -18,6 +18,9 @@
   --uss-text-primary: #262626;
   --uss-text-secondary: #737373;
   --uss-text-muted: #8e8e8e;
+  --uss-icon-color: #666666;
+  --uss-dot-active: #002953;
+  --uss-dot-inactive: #d3dbe3;
   --uss-blue: #0095f6;
   --uss-blue-hover: #1877f2;
   --uss-blue-active: #0074cc;
@@ -421,13 +424,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 0;
+  height: 20px;
 }
 
 .uss-actions-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .uss-icon-btn {
@@ -435,20 +439,22 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  color: var(--uss-text-primary);
+  color: var(--uss-icon-color);
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .uss-icon-btn:hover {
   opacity: 0.65;
-  transform: scale(1.08);
 }
 
 .uss-icon-btn:active {
-  transform: scale(0.92);
+  opacity: 0.8;
 }
 
 /* Likes & Views Count */
@@ -539,21 +545,19 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #d0d5dd;
+  background-color: var(--uss-dot-inactive);
   border: none;
   padding: 0;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .uss-dot:hover {
-  background-color: #98a2b3;
+  background-color: var(--uss-dot-active);
 }
 
 .uss-dot.active {
-  background-color: var(--uss-blue);
-  /* #0095f6 */
-  transform: scale(1.15);
+  background-color: var(--uss-dot-active);
 }
 
 /* ── Unavailable State (Preserves Card Layout & Navigation) ── */

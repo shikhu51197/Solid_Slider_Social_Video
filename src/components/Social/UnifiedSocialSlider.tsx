@@ -250,7 +250,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
                 handleCardClick();
               }}
             >
-              <HeartIcon size={24} />
+              <HeartIcon size={20} />
             </button>
             <button
               type="button"
@@ -261,7 +261,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
                 handleCardClick();
               }}
             >
-              <CommentIcon size={24} />
+              <CommentIcon size={20} />
             </button>
             <button
               type="button"
@@ -272,7 +272,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
                 handleCardClick();
               }}
             >
-              <ShareIcon size={24} />
+              <ShareIcon size={20} />
             </button>
           </div>
 
@@ -285,7 +285,7 @@ const SocialCardItem: Component<SocialCardItemProps> = (props) => {
               handleCardClick();
             }}
           >
-            <BookmarkIcon size={24} />
+            <BookmarkIcon size={20} />
           </button>
         </div>
 
