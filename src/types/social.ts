@@ -47,23 +47,15 @@ export interface SocialPost {
 
 export type FetchStatus = 'idle' | 'loading' | 'success' | 'error' | 'empty';
 
-export interface MissingIntegrationDetail {
-  platform: SocialPlatform;
-  missingConfigs: string[];
-  documentationUrl: string;
-  requiredScopes: string[];
-}
-
 export interface SocialDataResult {
   posts: SocialPost[];
   status: FetchStatus;
   errorMessage?: string;
   errorCategory?: string;
   account?: SocialAccount;
-  dataSource: 'official-catalog' | 'live-api' | 'cached' | 'none';
+  dataSource: 'live-api' | 'cached' | 'none';
   lastRefreshedAt?: string;
   cacheTtlSeconds?: number;
-  missingIntegrationDetails?: MissingIntegrationDetail[];
 }
 
 /**

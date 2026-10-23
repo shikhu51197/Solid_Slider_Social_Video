@@ -1,107 +1,81 @@
-# Solid.js Social Media Slider
+# Solid.js Social Video Slider
 
-A high-fidelity, responsive **Social Media Slider** component built with **Solid.js**, TypeScript, and Vanilla CSS, matching the reference design specification and accommodating official Bajaj Finance channel data.
+Responsive Instagram, YouTube and Facebook cards with live server-side platform integrations. Card spacing, colors, icons and responsive sizing follow the supplied Figma reference.
 
-## Features
+## Run locally
 
-- **Pixel-Perfect Reference Alignment**: Light grey page background, heading "Latest from social", large white card with rounded corners (`16px`), subtle border, and box-shadow.
-- **Rich Profile Header**: Account avatar, username, verified checkmark badge, follower count, and primary "View profile" button.
-- **Media Presentation**: Aspect-ratio preserving container with `object-fit: cover` that handles portrait, square, and landscape thumbnails without distortion.
-- **Overlaid Circular Navigation**: Circular Previous/Next arrow buttons overlaid on the media.
-- **Interactive Engagement Row**: Accessible Like, Comment, Share, and Bookmark icons, plus actual like counts (never fabricated).
-- **Caption & Truncation**: Bold author handle, caption text with clean multi-line clamping and ellipsis.
-- **Platform-Adaptive Links**: Dynamic "View more on Instagram", "View more on Facebook", and "View more on YouTube" links.
-- **Pagination**: Centered pagination dots indicating slide count and current active slide.
-- **Navigation & Gestures**:
-  - Previous / Next circular buttons
-  - Clickable pagination dots
-  - Touch swipe gestures (left/right) on mobile
-  - Keyboard navigation (`ArrowLeft` / `ArrowRight`)
-  - Clickable card redirection (thumbnail, caption, engagement, and "View more" open the specific post permalink)
-  - Isolated "View profile" button click (opens the profile without triggering post URL)
-- **Framework-Independent Data Layer**: Reusable domain models (`src/types/social.ts`) and data providers (`src/services/socialDataProvider.ts`) easily portable to React or Next.js.
-- **Robust Error & Metric Handling**: Loading skeleton, empty state, error state with retry, and missing-metric resilience.
+Requires Node.js 22.13 or newer.
 
----
+1. Run `npm install`.
+2. Copy `.env.example` to `.env` and add the authorized account credentials.
+3. Run `npm run dev` and open http://localhost:5173.
 
-## Official Channel Data
+Credentials stay on the server. Restart the development server after changing environment variables. Configure the same variables separately in Vercel before deploying.
 
-Uses the authorized official Bajaj Finance channel handles supplied by the business team:
-- **Instagram**: `bajajfinance__emihaina` (B2B, DEEL, Bajaj Mall)
-- **Facebook**: `bajajfinance` (Bajaj Finance - All Businesses)
-- **YouTube**: `Bajaj Finance Money Adda` (`@BajajFinanceMoneyAdda` - Investment)
-- **YouTube**: `Bajaj Finance` (`@bajaj_finance_limited` - All Businesses)
+## Behavior
 
----
+- One card per platform, in Instagram / YouTube / Facebook order.
+- Live account details, thumbnails, captions, permalinks and available engagement metrics.
+- Pagination, keyboard arrows, touch swipes, mouse dragging and horizontal trackpad navigation.
+- Card, play and engagement clicks open the post; profile controls open the account.
+- Instagram profile and post links open in the same tab on mobile and desktop, retaining the slider in browser history. Instagram controls navigation inside its own app.
+- Saved slide selection is restored when returning to the page.
+- The visible thumbnail loads eagerly; hidden thumbnails load lazily.
+- Independent polling while visible: Facebook every minute; Instagram and YouTube every five minutes.
+- Failed requests retain previously loaded real posts; explicitly empty feeds clear them. Failures offer retry inside the card layout.
+- No static post catalog, simulated delays or fabricated metrics. Local SVGs serve as image/error placeholders.
 
-## Getting Started
+UI labels, styles, platform order and refresh intervals are configuration. Social content comes from APIs. The server resolves Instagram/Facebook accounts from credentials and YouTube from `YOUTUBE_CHANNEL_HANDLE`.
 
-### 1. Install Dependencies
-```bash
-npm install
+## Structure
+
+```text
+src/
+  components/Social/
+    UnifiedSocialSlider.tsx       Slider host and saved selection
+    SocialCardItem.tsx            Card and pagination
+    Icons.tsx                     Shared SVG icons
+    UnifiedSocialSlider.css       Scoped responsive styles
+    hooks/useSocialFeeds.ts       Feed lifecycle, polling and retry
+    hooks/useSliderGestures.ts    Mouse, touch, wheel and keyboard input
+  config/social.ts                Platform labels, order and intervals
+  services/socialDataProvider.ts  Shared API adapter, validation and TTL cache
+  server/
+    socialEndpoint.ts             Request validation, caching and hosting adapter
+    socialApiHandler.ts           Server API exports
+    instagramApi.ts               Instagram profile/media mapping
+    youtubeApi.ts                 YouTube channel/video mapping
+    facebookApi.ts                Facebook posts/photos and diagnostics
+    platformTypes.ts              Upstream response types
+    socialApiShared.ts            Bounded cache and metric formatting
+    upstreamFetch.ts              Upstream timeouts
+  types/social.ts                 Domain models
+  utils/                          Navigation, selection and fetch helpers
+api/social/                       Production endpoints
 ```
 
-### 2. Run the Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+## Reuse
 
-### 3. Run Unit & Integration Tests
+```tsx
+import { UnifiedSocialSlider } from './components/Social/UnifiedSocialSlider';
+
+<UnifiedSocialSlider title="Latest from social" storageKey="home-social" />
+```
+
+Use a distinct, stable `storageKey` per instance. Supply optional `providers` implementing `ISocialDataProvider` for another backend. Deploy the same-origin API routes for the default adapter. Avoid importing page-level `App.css` or `index.css` into a host website.
+
+## Checks
+
 ```bash
 npm test
-```
-
-### 4. Build for Production
-```bash
 npm run build
+npm run check:bundle
 ```
 
----
+The build includes strict TypeScript and unused-code checks. Tests mock upstream APIs without private credentials. The bundle check verifies configured credentials are absent from generated client JavaScript.
 
-## Architecture
+## Facebook token troubleshooting
 
-```
-src/
-├── types/
-│   └── social.ts               # Framework-independent domain interfaces & data provider types
-├── services/
-│   ├── socialDataProvider.ts   # Official Bajaj Finance catalog provider & Live API provider
-│   └── __tests__/
-│       └── socialDataProvider.test.ts
-├── components/
-│   └── SocialSlider/
-│       ├── Icons.tsx           # Scalable SVG icons (Verified badge, Chevrons, Engagement)
-│       ├── PaginationDots.tsx  # Accessible pagination dots
-│       ├── SocialCard.tsx      # Core card component matching Figma reference
-│       ├── SocialMediaSlider.tsx # Slider container with touch swipe & keyboard navigation
-│       ├── SocialMediaSlider.css # Vanilla CSS design system & responsive media queries
-│       ├── StateViews.tsx      # Skeleton loader, Empty state, and Error state with retry
-│       └── __tests__/
-│           ├── SocialCard.test.tsx
-│           └── SocialMediaSlider.test.tsx
-├── App.tsx                     # Demo host with interactive state switcher toolbar
-├── index.css                   # Global reset and typography tokens
-└── index.tsx                   # Solid.js root entrypoint
-```
+Local and Vercel credentials are separate. A Git push does not synchronize them. Update `FACEBOOK_PAGE_ACCESS_TOKEN` in the affected environment with the matching `FACEBOOK_PAGE_ID`, then restart locally or redeploy on Vercel.
 
-## Facebook works on deployment but says “Session expired” locally
-
-Local development reads its own private `FACEBOOK_PAGE_ID` and
-`FACEBOOK_PAGE_ACCESS_TOKEN`; deployment credentials are configured separately.
-Pushing code does not synchronize those credentials. Meta error code 190 with
-subcode 463 indicates an expired access token.
-
-1. Obtain a valid Page access token through the authorized Meta app/account, or
-   securely retrieve the current token from your deployment environment settings.
-2. Set it in the local `.env` (or `.env.local` override), keeping the Page ID
-   matched to the token. Check for stale overrides in `.env.development`,
-   `.env.development.local`, and the launching shell.
-3. Restart `npm run dev`, then open `/api/social/facebook?diagnostic=true`
-   locally to verify the connection. Never put a token in a browser URL.
-
-An expired token cannot be repaired by retrying requests or pushing a commit.
-This app has no OAuth renewal flow or app credentials for unattended renewal.
-Keep tokens server-side; never use a public environment variable prefix or
-commit `.env` files. The server separates cached Facebook results by credential
-fingerprint so a rotated token does not reuse the previous token's response.
+`/api/social/facebook?diagnostic=true` checks the configured Page and content endpoints. The app does not implement unattended OAuth renewal. See `docs/production-readiness.md` for caching and hosting details.

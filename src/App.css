@@ -1,6 +1,4 @@
-/* ==============================================================================
-   Application Layout & Dashboard Styles
-   ============================================================================== */
+/* Page-level host layout; reusable slider styles remain scoped to the component. */
 
 .app-page-layout {
   min-height: 100vh;
@@ -13,67 +11,6 @@
   box-sizing: border-box;
 }
 
-/* Source Selection Pill Bar */
-.app-source-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 24px;
-  background: #ffffff;
-  padding: 6px;
-  border-radius: 9999px;
-  border: 1px solid #eaecf0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.source-pill {
-  background: transparent;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 9999px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #475467;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.18s ease;
-}
-
-.source-pill:hover {
-  color: #101828;
-  background: #f8fafc;
-}
-
-.source-pill.active {
-  background: #101828;
-  color: #ffffff;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.2);
-}
-
-.source-pill.active .pill-badge {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-}
-
-.pill-live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
-}
-
-.app-top-header {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
 .app-main-content {
   width: 100%;
   display: flex;
@@ -81,106 +18,6 @@
   align-items: center;
 }
 
-.pill-badge {
-  font-size: 10px;
-  background: #e2e8f0;
-  color: #475569;
-  padding: 1px 6px;
-  border-radius: 9999px;
-  font-weight: 600;
-}
-
-.pill-yt-icon {
-  color: #ef4444;
-  font-size: 10px;
-}
-
-/* Tester Drawer */
-.tester-drawer {
-  background: #ffffff;
-  border: 1px solid #eaecf0;
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
-  max-width: 440px;
-  width: 100%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.tester-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #344054;
-}
-
-.tester-input-group {
-  display: flex;
-  gap: 8px;
-}
-
-.tester-input {
-  flex: 1;
-  padding: 7px 12px;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  font-size: 13px;
-  font-family: inherit;
-  outline: none;
-}
-
-.tester-input:focus {
-  border-color: #0084ff;
-  box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.15);
-}
-
-.tester-submit-btn {
-  background: #101828;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 7px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.tester-submit-btn:hover {
-  background: #1e293b;
-}
-
-.tester-api-note {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  background: #f8fafc;
-  padding: 6px 10px;
-  border-radius: 6px;
-  color: #475569;
-  overflow-x: auto;
-}
-
-/* Centerpiece Slider Container */
-.app-slider-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
 @media (max-width: 600px) {
-  .app-page-layout {
-    padding: 16px 0 40px;
-  }
-
-  .app-source-bar {
-    border-radius: 12px;
-    padding: 4px;
-  }
-
-  .source-pill {
-    padding: 5px 10px;
-    font-size: 12px;
-  }
+  .app-page-layout { padding: 16px 0 40px; }
 }

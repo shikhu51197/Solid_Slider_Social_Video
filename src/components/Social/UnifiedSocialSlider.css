@@ -1,23 +1,13 @@
-/* ==============================================================================
-   Unified Social Slider — Light Figma Reference Card Design
-   Exact visual parity with the attached reference screenshot:
-   - Heading: "Latest from social" (dark bold, left-aligned)
-   - Pristine white card with subtle rounded corners and drop shadow
-   - Profile header with avatar, verified badge, followers, and blue "View profile" button
-   - Media container with overlaid circular white arrows (< and >) and center play button
-   - Footer with Heart, Comment, Share, Bookmark icons, likes, caption, blue link, date
-   - Exactly 3 pagination dots (. . .) with active blue dot
-   - Full drag, sweep, touch, and horizontal wheel scroll support
-   ============================================================================== */
+/* Scoped Figma card styles. Content and metrics come from live feeds. */
 
 .uss-page-wrapper {
-  --uss-bg-page: #f4f5f7;
+
   --uss-card-bg: #ffffff;
   --uss-card-border: var(--neutrals-gray-grey-80-cccccc, #CCCCCC);
-  --uss-card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+
   --uss-text-primary: #1a1a1a;
   --uss-text-secondary: #737373;
-  --uss-text-muted: #8e8e8e;
+
   --uss-icon-color: #666666;
   --uss-dot-active: #002953;
   --uss-dot-inactive: #d3dbe3;
@@ -26,8 +16,7 @@
   --uss-blue-active: #0074cc;
   --uss-border-radius: 8px;
   --uss-font: Arial, Helvetica, sans-serif;
-  --uss-arrow-bg: rgba(255, 255, 255, 0.95);
-  --uss-arrow-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+
 }
 
 .uss-page-wrapper, .uss-page-wrapper * { box-sizing: border-box; }
@@ -70,65 +59,6 @@
   margin: 0;
   letter-spacing: normal;
   text-align: left;
-}
-
-.uss-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.uss-refresh-action-btn {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #4b5563;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition: all 0.18s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.uss-refresh-action-btn:hover:not(:disabled) {
-  background: #f9fafb;
-  color: #111827;
-  border-color: #d1d5db;
-}
-
-.uss-refresh-action-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.uss-refresh-icon {
-  font-size: 12px;
-  display: inline-block;
-  line-height: 1;
-}
-
-.uss-refresh-icon.spinning {
-  animation: uss-spin 0.85s linear infinite;
-}
-
-@keyframes uss-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.uss-refresh-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #16a34a;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -330,52 +260,13 @@
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.uss-media-thumbnail.cover,
-.uss-media-thumbnail.contain {
+.uss-media-thumbnail.cover {
   object-fit: contain;
   object-position: center;
 }
 
 .uss-card:hover .uss-media-thumbnail {
   transform: none;
-}
-
-/* Overlaid Circular Navigation Arrows (< and >) */
-.uss-nav-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: var(--uss-arrow-bg);
-  border: none;
-  box-shadow: var(--uss-arrow-shadow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #262626;
-  cursor: pointer;
-  z-index: 6;
-  transition: all 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
-  padding: 0;
-}
-
-.uss-nav-arrow:hover {
-  background-color: #ffffff;
-  transform: translateY(-50%) scale(1.1);
-}
-
-.uss-nav-arrow:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
-.uss-nav-prev {
-  left: 12px;
-}
-
-.uss-nav-next {
-  right: 12px;
 }
 
 /* Center Play Button Overlay */
@@ -457,7 +348,7 @@
   opacity: 0.8;
 }
 
-/* Likes & Views Count */
+/* Likes */
 .uss-likes-count {
   font-size: 12px;
   font-weight: 600;
@@ -465,12 +356,6 @@
   margin-bottom: 6px;
 }
 
-.uss-views-count {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--uss-text-secondary);
-  margin-bottom: 6px;
-}
 
 /* Caption */
 .uss-caption {
@@ -519,16 +404,6 @@
 .uss-view-more-link:hover {
   text-decoration: underline;
   color: var(--uss-blue-hover);
-}
-
-/* Publish Date */
-.uss-publish-date {
-  font-size: 11px;
-  color: var(--uss-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 8px;
-  margin-top: 2px;
 }
 
 /* 3 Pagination Dots matching reference UI */

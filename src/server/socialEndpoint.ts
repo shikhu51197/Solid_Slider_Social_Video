@@ -1,13 +1,23 @@
+import type { SocialPlatform } from '../types/social.js';
 import { withUpstreamBudget } from './upstreamFetch.js';
 import { facebookCredentialVersion, diagnoseFacebookConnection, fetchFacebookPosts, fetchInstagramPosts, fetchYouTubePosts } from './socialApiHandler.js';
 
-type Platform = 'instagram' | 'facebook' | 'youtube';
+interface NodeRequest {
+  url?: string;
+  method?: string;
+  headers: Record<string, string | string[] | undefined>;
+}
+interface NodeResponse {
+  statusCode: number;
+  setHeader(name: string, value: string): unknown;
+  end(body: string): unknown;
+}
 export class RequestError extends Error {
   constructor(message: string, public status = 400) { super(message); }
 }
 
 /** Bound public query cardinality; refresh never bypasses the shared cache. */
-export function validateQuery(platform: Platform, url: URL) {
+export function validateQuery(platform: SocialPlatform, url: URL) {
   const allowed = new Set(['limit', 'refresh', ...(platform === 'facebook' ? ['pageId', 'diagnostic'] : []), ...(platform === 'youtube' ? ['handle'] : [])]);
   for (const key of url.searchParams.keys()) {
     if (!allowed.has(key) || url.searchParams.getAll(key).length !== 1) throw new RequestError('Unsupported query parameter');
@@ -68,7 +78,7 @@ export async function cachedResult(key: string, load: () => Promise<unknown>, tt
   return request;
 }
 
-export function createSocialEndpoint(platform: Platform) {
+export function createSocialEndpoint(platform: SocialPlatform) {
   const handleWeb = async (request: Request): Promise<Response> => {
     const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
     try {
@@ -103,8 +113,8 @@ export function createSocialEndpoint(platform: Platform) {
       return new Response(JSON.stringify({ posts: [], source: platform, status: 'error', errorCategory: status === 400 ? 'invalid_request' : 'network_error', error: error instanceof RequestError ? error.message : 'Unable to load social content. Please try again.' }), { status, headers });
     }
   };
-  const handler = async (req: any, res?: any) => {
-    if (!res || typeof req?.headers?.get === 'function') return handleWeb(req as Request);
+  const handler = async (req: Request | NodeRequest, res?: NodeResponse) => {
+    if (!res || req instanceof Request) return handleWeb(req as Request);
     const headers = new Headers();
     for (const [key, value] of Object.entries(req.headers || {})) if (typeof value === 'string') headers.set(key, value);
     const response = await handleWeb(new Request(new URL(req.url || `/api/social/${platform}`, 'http://localhost'), { method: req.method || 'GET', headers }));

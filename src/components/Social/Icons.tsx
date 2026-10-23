@@ -26,35 +26,7 @@ export const VerifiedBadge: Component<{ size?: number; class?: string }> = (prop
   </svg>
 );
 
-export const ChevronLeftIcon: Component<{ size?: number }> = (props) => (
-  <svg
-    width={props.size || 20}
-    height={props.size || 20}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2.5"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-);
 
-export const ChevronRightIcon: Component<{ size?: number }> = (props) => (
-  <svg
-    width={props.size || 20}
-    height={props.size || 20}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2.5"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <polyline points="9 18 15 12 9 6" />
-  </svg>
-);
 
 export const HeartIcon: Component<{ size?: number }> = (props) => (
   <svg
@@ -121,38 +93,7 @@ export const BookmarkIcon: Component<{ size?: number }> = (props) => (
   </svg>
 );
 
-export const AlertCircleIcon: Component<{ size?: number }> = (props) => (
-  <svg
-    width={props.size || 48}
-    height={props.size || 48}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="8" x2="12" y2="12" />
-    <line x1="12" y1="16" x2="12.01" y2="16" />
-  </svg>
-);
 
-export const InboxIcon: Component<{ size?: number }> = (props) => (
-  <svg
-    width={props.size || 48}
-    height={props.size || 48}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-  </svg>
-);
 
 export const CenterPlayButton: Component<{
   size?: number;
