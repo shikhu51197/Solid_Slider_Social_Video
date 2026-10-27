@@ -1,0 +1,711 @@
+/* Scoped Figma card styles. Content and metrics come from live feeds. */
+
+.uss-page-wrapper {
+
+  --uss-card-bg: #ffffff;
+  --uss-card-border: var(--neutrals-gray-grey-80-cccccc, #CCCCCC);
+
+  --uss-text-primary: #1a1a1a;
+  --uss-text-secondary: #737373;
+
+  --uss-icon-color: #666666;
+  --uss-dot-active: #002953;
+  --uss-dot-inactive: #d3dbe3;
+  --uss-blue: #0095f6;
+  --uss-blue-hover: #1877f2;
+  --uss-blue-active: #0074cc;
+  --uss-border-radius: 8px;
+  --uss-font: Arial, Helvetica, sans-serif;
+
+}
+
+.uss-page-wrapper, .uss-page-wrapper * { box-sizing: border-box; }
+
+.uss-page-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--uss-font);
+  box-sizing: border-box;
+}
+
+.uss-slider-container {
+  width: 100%;
+  max-width: 375px;
+  padding: 12px 16px;
+  gap: 8px;
+  background-color: var(--uss-card-bg);
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+/* Heading row matching "Latest from social" */
+.uss-header-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.uss-heading {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  letter-spacing: normal;
+  text-align: left;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Slider Viewport & Strip
+────────────────────────────────────────────────────────────────────────────── */
+.uss-slider-viewport {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 0;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  position: relative;
+}
+
+.uss-slider-viewport.is-dragging {
+  cursor: grabbing !important;
+}
+
+.uss-slider-viewport.is-dragging * {
+  pointer-events: none;
+}
+
+.uss-slides-strip {
+  display: flex;
+  width: 100%;
+  will-change: transform;
+  align-items: stretch;
+}
+
+.uss-slide-item {
+  display: flex;
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Card Component — White, Rounded, Drop Shadow
+────────────────────────────────────────────────────────────────────────────── */
+.uss-post-layout {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.uss-card {
+  width: 100%;
+  min-height: 0;
+  padding: 15px;
+  background-color: var(--uss-card-bg);
+  border: 1px solid var(--uss-card-border);
+  border-radius: var(--uss-border-radius);
+  box-shadow: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.uss-card:focus-visible {
+  outline: 2px solid var(--uss-blue);
+  outline-offset: 2px;
+}
+
+/* ── 1. Profile Header ── */
+.uss-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  flex: 0 0 36px;
+  gap: 10px;
+  padding: 0;
+  margin-bottom: 20px;
+  background-color: #ffffff;
+  border-bottom: none;
+  position: relative;
+  z-index: 2;
+}
+
+.uss-account-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.uss-avatar-container {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.uss-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: block;
+  background-color: #f3f4f6;
+}
+
+.uss-account-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.uss-username-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.uss-username {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--uss-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uss-followers {
+  font-size: 10px;
+  color: var(--uss-text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Blue "View profile" Button */
+.uss-view-profile-btn {
+  background-color: var(--uss-blue);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.18s ease, transform 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.uss-view-profile-btn:hover {
+  background-color: var(--uss-blue-hover);
+}
+
+.uss-view-profile-btn:active {
+  background-color: var(--uss-blue-active);
+  transform: scale(0.98);
+}
+
+/* ── 2. Media Area ── */
+.uss-media-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 311 / 340;
+  flex: none;
+  min-height: 0;
+  background-color: #000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uss-media-thumbnail {
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  object-fit: contain;
+  object-position: center;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.uss-media-thumbnail.cover {
+  object-fit: contain;
+  object-position: center;
+}
+
+.uss-card:hover .uss-media-thumbnail {
+  transform: none;
+}
+
+/* Center Play Button Overlay */
+.uss-center-play-btn,
+.uss-page-wrapper .social-center-play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.uss-center-play-btn:hover,
+.uss-page-wrapper .social-center-play-btn:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.uss-center-play-btn:active,
+.uss-page-wrapper .social-center-play-btn:active {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+/* ── 3. Card Footer ── */
+.uss-card-footer {
+  padding: 8px 0 0;
+  display: grid;
+  grid-template-rows: minmax(20px, auto) minmax(14px, auto) minmax(42px, auto) 1px minmax(14px, auto);
+  gap: 8px;
+  flex: none;
+  background-color: #ffffff;
+}
+
+/* Engagement Row */
+.uss-engagement-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+  height: 20px;
+}
+
+.uss-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.uss-icon-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--uss-icon-color);
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease;
+}
+
+.uss-icon-btn:hover {
+  opacity: 0.65;
+}
+
+.uss-icon-btn:active {
+  opacity: 0.8;
+}
+
+/* Likes */
+.uss-likes-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--uss-text-primary);
+  margin-bottom: 6px;
+}
+
+
+/* Caption */
+.uss-caption {
+  font-size: 12px;
+  line-height: 14px;
+  color: var(--uss-text-primary);
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.uss-caption-author {
+  font-weight: 600;
+  margin-right: 6px;
+  color: var(--uss-text-primary);
+}
+
+/* Subtle Horizontal Divider Line (Matching User Reference) */
+.uss-divider {
+  height: 1px;
+  background-color: #cccccc;
+  border: none;
+  margin: 14px 0 12px 0;
+  width: 100%;
+  display: block;
+}
+
+/* View More Link */
+.uss-view-more-row {
+  margin-bottom: 4px;
+}
+
+.uss-view-more-link {
+  color: #1a7fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.15s ease;
+  display: inline-block;
+}
+
+.uss-view-more-link:hover {
+  text-decoration: underline;
+  color: var(--uss-blue-hover);
+}
+
+/* 3 Pagination Dots matching reference UI */
+.uss-dots-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+  min-height: 24px;
+}
+
+.uss-dot {
+  width: 12px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--uss-dot-inactive);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.uss-dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.uss-dot:hover {
+  color: var(--uss-dot-active);
+}
+
+.uss-dot.active {
+  color: var(--uss-dot-active);
+}
+
+/* ── Unavailable State (Preserves Card Layout & Navigation) ── */
+.uss-unavailable-state {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  text-align: center;
+  box-sizing: border-box;
+  z-index: 3;
+}
+
+.uss-unavailable-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(24, 119, 242, 0.15);
+  border: 1px solid rgba(24, 119, 242, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.uss-unavailable-badge {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  margin-bottom: 8px;
+}
+
+.uss-unavailable-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+
+.uss-unavailable-desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #94a3b8;
+  max-width: 270px;
+  margin: 0 auto 16px;
+}
+
+.uss-unavailable-retry-btn {
+  background-color: #1877f2;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.18s ease, transform 0.12s ease;
+  font-family: inherit;
+}
+
+.uss-unavailable-retry-btn:disabled,
+.uss-view-profile-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.uss-unavailable-retry-btn:hover:not(:disabled) {
+  background-color: #0d65d9;
+  transform: scale(1.02);
+}
+
+.uss-unavailable-retry-btn:active {
+  transform: scale(0.98);
+}
+
+.uss-retry-icon {
+  font-size: 14px;
+  display: inline-block;
+}
+/* Reserve the same rows even when a platform omits metrics or captions. */
+.uss-card-footer > * {
+  min-width: 0;
+  margin: 0;
+}
+
+.uss-metrics {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-wrap: anywhere;
+}
+
+.uss-metrics > * {
+  margin: 0;
+  line-height: 14px;
+}
+
+.uss-caption {
+  min-height: 42px;
+}
+
+.uss-username-row svg {
+  flex-shrink: 0;
+}
+
+.uss-unavailable-state {
+  position: absolute;
+  inset: 0;
+}
+
+/* Keep Facebook's text footer aligned with the reference card. */
+.uss-facebook-footer {
+  grid-template-rows: minmax(20px, auto) minmax(14px, auto) minmax(42px, auto) 1px minmax(14px, auto);
+}
+
+.uss-facebook-footer .uss-engagement-row,
+.uss-facebook-footer .uss-likes-count,
+.uss-facebook-footer .uss-caption,
+.uss-facebook-footer .uss-divider,
+.uss-facebook-footer .uss-view-more-row {
+  margin: 0;
+}
+
+.uss-facebook-footer .uss-caption-author {
+  font-weight: 700;
+}
+
+.uss-facebook-caption {
+  user-select: text;
+}
+
+/* Preserve complete source framing, including portrait posts. */
+.uss-media-thumbnail.cover.uss-media-fill {
+  object-fit: contain;
+}
+
+.uss-profile-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Size to the embedding column as well as the device viewport. */
+.uss-page-wrapper {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.uss-slider-container,
+.uss-post-layout,
+.uss-card,
+.uss-username-row {
+  min-width: 0;
+}
+
+.uss-heading,
+.uss-view-more-link,
+.uss-unavailable-title {
+  overflow-wrap: anywhere;
+}
+
+.uss-view-profile-btn {
+  min-height: 26px;
+  line-height: 14px;
+}
+
+.uss-card-footer {
+  line-height: 14px;
+}
+
+.uss-icon-btn svg {
+  flex-shrink: 0;
+}
+
+.uss-page-wrapper :is(button, a):focus-visible {
+  outline: 2px solid var(--uss-dot-active);
+  outline-offset: 2px;
+}
+
+.uss-dot:focus-visible {
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+@container (max-width: 340px) {
+  .uss-slider-container { padding-inline: 12px; }
+  .uss-card { padding: 12px; }
+  .uss-card-header { gap: 6px; }
+  .uss-account-meta { gap: 6px; }
+}
+
+@container (max-width: 280px) {
+  .uss-card-header {
+    height: auto;
+    flex-basis: auto;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    margin-bottom: 12px;
+  }
+  .uss-account-meta { flex-basis: 100%; }
+  .uss-unavailable-state { padding: 8px; overflow-y: auto; justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uss-page-wrapper *,
+  .uss-slides-strip { transition: none !important; animation: none !important; }
+}
+
+/* Expand only the caption; keep the existing collapsed card presentation. */
+.uss-caption-section { position: relative; min-width: 0; }
+.uss-caption-section .uss-caption { margin-bottom: 0; }
+.uss-caption.uss-caption-expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  white-space: pre-line;
+}
+.uss-caption-toggle {
+  display: inline;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: var(--uss-card-bg);
+  color: var(--uss-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 14px;
+  font-weight: 400;
+  cursor: pointer;
+}
+.uss-caption-toggle:hover { text-decoration: underline; }
+
+.uss-caption-section-compact .uss-caption {
+  -webkit-line-clamp: 2;
+  min-height: 28px;
+}
+.uss-caption-section-compact .uss-caption-expanded { -webkit-line-clamp: unset; }
+.uss-caption-section-truncated .uss-caption-toggle {
+  position: absolute;
+  right: 0;
+  top: 28px;
+  padding-left: 10px;
+  background: linear-gradient(to right, transparent, var(--uss-card-bg) 10px);
+}
+.uss-caption-section-truncated .uss-caption-toggle::before {
+  content: '…';
+  background: var(--uss-card-bg);
+}
+.uss-caption-section-expanded .uss-caption-toggle { margin-top: 2px; }
+
+.uss-caption-section-compact.uss-caption-section-truncated .uss-caption-toggle { top: 14px; }

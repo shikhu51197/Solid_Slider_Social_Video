@@ -1,0 +1,29 @@
+{
+  "name": "solidjs-social-video-slider",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --use-system-ca node_modules/vite/bin/vite.js",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "check:bundle": "node scripts/check-client-secrets.mjs"
+  },
+  "dependencies": {
+    "solid-js": "^1.9.15"
+  },
+  "devDependencies": {
+    "@solidjs/testing-library": "^0.8.10",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@types/node": "^24.13.3",
+    "happy-dom": "^21.0.4",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vite-plugin-solid": "^2.11.14",
+    "vitest": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

@@ -1,0 +1,12 @@
+$kind: http-request
+url: https://graph.facebook.com/v26.0/139731946049246_1104904928990163/reactions?type=LIKE&summary=total_count&limit=0
+method: GET
+queryParams:
+  type: LIKE
+  summary: total_count
+  limit: "0"
+auth:
+  type: bearer
+  credentials:
+    token: EAAXzPy45SCcBSyZCPwfZBDmQWVxB9BHyq5hjPLzKPw6GGBZBP6aXC4u7mygTJNPAGZCZCzPk2nw2IxpQxPgbdQjXB1ZBV3QUvcnAttbOQw0MAAIaOGynJFD5eeAVYyb0zZBzu00rLYsOK6YEZCEedTcFAENwpG6RRhJ7dGkXpIXLK4pE1WupMCGq85eWufNVrOvMDJWZBtDkZD
+order: 3000
